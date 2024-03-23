@@ -5,6 +5,7 @@
 #include <QSplitter>
 #include <QListView>
 #include <QTreeView>
+#include <QDir>
 #include <QFileSystemModel>
 
 QT_BEGIN_NAMESPACE
@@ -23,6 +24,7 @@ public:
 
 private slots:
     void goDownDir(const QModelIndex &index);
+    void goUpDir();
 
 private:
     Ui::MainWindow *ui;

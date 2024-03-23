@@ -29,10 +29,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeView->setRootIndex(dir->index(QDir::currentPath()));
 
     QObject::connect(ui->listView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(goDownDir(QModelIndex)));
+    QObject::connect(ui->back_button, SIGNAL(clicked(bool)), this, SLOT(goUpDir()));
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
     ui->listView->setRootIndex(index);
+    dir->setRootPath(dir->filePath(index));
+}
+
+void MainWindow::goUpDir() {
+    QDir now_dir(dir->rootPath());
+    now_dir.cdUp();
+    ui->listView->setRootIndex(dir->index(now_dir.absolutePath()));
+    dir->setRootPath(now_dir.absolutePath());
 }
 
 MainWindow::~MainWindow()
