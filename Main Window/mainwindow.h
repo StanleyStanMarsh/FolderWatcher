@@ -16,6 +16,7 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 private:
+    // Модель для взаимодействия с директориями
     QFileSystemModel *dir;
 
 public:
@@ -23,7 +24,9 @@ public:
     ~MainWindow();
 
 private slots:
+    // Слот для переходу к выделенной папке
     void goDownDir(const QModelIndex &index);
+    // Слот для возврата на одну директорию выше
     void goUpDir();
 
 private:
