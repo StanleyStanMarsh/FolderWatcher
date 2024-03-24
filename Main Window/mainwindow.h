@@ -7,7 +7,10 @@
 #include <QTreeView>
 #include <QDir>
 #include <QFileSystemModel>
+#include <QStandardItemModel>
 #include <QMessageBox>
+#include <QDebug>
+#include <QDateTime>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -16,9 +19,6 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-private:
-    // Модель для взаимодействия с директориями
-    QFileSystemModel *dir;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -36,5 +36,10 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    // Модель для взаимодействия с директориями
+    QFileSystemModel *dir;
+    // модель работы с информацией о директории
+    QStandardItemModel *info;
 };
 #endif // MAINWINDOW_H

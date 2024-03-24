@@ -5,11 +5,22 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    // настройка модели работы с директориями
     ui->setupUi(this);
     dir = new QFileSystemModel;
     dir->setRootPath(QDir::currentPath());
     ui->listView->setModel(dir);
     ui->listView->setRootIndex(dir->index(QDir::currentPath()));
+
+    // настройка модели работы с инфой о директориях
+    info = new QStandardItemModel;
+    ui->tableView->resizeColumnsToContents();
+    QHeaderView *header = ui->tableView->horizontalHeader();
+    header->setStretchLastSection(true);
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableView->setModel(info);
 
     // Коннектим двойное нажатие по папке/файлу к его открытию
     QObject::connect(ui->listView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(goDownDir(QModelIndex)));
@@ -37,6 +48,37 @@ void MainWindow::goUpDir() {
 }
 
 void MainWindow::showMainInfo() {
+    //
+    info->clear();
+
+    // установка названий столбцов
+    info->setColumnCount(4);
+    info->setHorizontalHeaderLabels(QStringList{"name", "date", "type", "size"});
+
+    // Получаем индекс текущей директории и количество файлов в директории
+    QModelIndex currentDirIndex = dir->index(dir->rootPath());
+    int fileCount = dir->rowCount(currentDirIndex);
+
+    // Проходимся по всем файлам и печатаем информацию о них
+    for (int i = 0; i < fileCount; i++) {
+        QModelIndex fileIndex = dir->index(i, 0, currentDirIndex);
+
+        // Получаем тип файла (расширение)
+        QString fileType = (dir->isDir(fileIndex)) ? "Folder" : dir->fileInfo(fileIndex).completeSuffix();
+        if (fileType == "") fileType = "File";
+
+        // добавляем строку с инфой о файле
+        QList<QStandardItem *> row;
+        row << new QStandardItem(dir->fileName(fileIndex));
+        row << new QStandardItem(dir->lastModified(fileIndex).toString("yyyy-MM-dd HH:mm:ss"));
+        row << new QStandardItem(fileType);
+        if (fileType != "Folder")
+            row << new QStandardItem(QString::number(dir->size(fileIndex)) + " byte");
+        else
+            row << new QStandardItem("");
+
+        info->appendRow(row);
+    }
 
 }
 
