@@ -7,6 +7,7 @@
 #include <QTreeView>
 #include <QDir>
 #include <QFileSystemModel>
+#include <QMessageBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -24,10 +25,14 @@ public:
     ~MainWindow();
 
 private slots:
-    // Слот для переходу к выделенной папке
+    // Слот для перехода к выделенной папке
     void goDownDir(const QModelIndex &index);
     // Слот для возврата на одну директорию выше
     void goUpDir();
+    // Слот для вывода основной инфы о текущей директории в таблице
+    void showMainInfo();
+    // Слот для открытия информационного сообщения
+    void on_action_8_triggered();
 
 private:
     Ui::MainWindow *ui;
