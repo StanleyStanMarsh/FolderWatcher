@@ -59,6 +59,10 @@ void MainWindow::showMainInfo() {
     QModelIndex currentDirIndex = dir->index(dir->rootPath());
     int fileCount = dir->rowCount(currentDirIndex);
 
+    if (ui->dir_size_box->isChecked()) {
+        ui->info_label->setText("Молчать! Идет подсчет размера директорий");
+    }
+
     // Проходимся по всем файлам и печатаем информацию о них
     for (int i = 0; i < fileCount; i++) {
         QModelIndex fileIndex = dir->index(i, 0, currentDirIndex);
@@ -73,22 +77,43 @@ void MainWindow::showMainInfo() {
         row << new QStandardItem(dir->lastModified(fileIndex).toString("yyyy-MM-dd HH:mm:ss"));
         row << new QStandardItem(fileType);
         if (fileType != "Folder")
-            row << new QStandardItem(QString::number(dir->size(fileIndex)) + " byte");
+        {
+            // Делаем читаемый размер
+            double file_size = dir->size(fileIndex);
+            row << new QStandardItem(getMinimizedFormSize(file_size));
+        }
         else
-            row << new QStandardItem("");
+        {
+            // Если стоит галочка в чек боксе, считаем еще и размер папок
+            if (ui->dir_size_box->isChecked()) {
+                // Задержка для постепенной отрисовки строк
+                delay(100);
+                unsigned long long dir_size = 0;
+                // Переделываем слеши в бэкслеши для понятного формата для функции
+                std::wstring path_for_fsys = dir->filePath(fileIndex).replace('/', "\\\\").toStdWString();
+
+                getFoldersizeIterative(path_for_fsys, dir_size);
+
+                // Делаем читаемый размер
+                double d_dir_size = dir_size;
+                row << new QStandardItem(getMinimizedFormSize(d_dir_size));
+            }
+            // Если галочки нет - в таблице для папок размер не указывается
+            else
+                row << new QStandardItem("");
+        }
 
         info->appendRow(row);
     }
-
+    ui->info_label->setText("Информация");
 }
 
 MainWindow::~MainWindow()
 {
     delete dir;
+    delete info;
     delete ui;
 }
-
-
 
 void MainWindow::on_action_8_triggered()
 {
@@ -99,5 +124,57 @@ void MainWindow::on_action_8_triggered()
     info_box.setText("<b>Программа FolderWatcher ver. 0.2</b>");
     info_box.setInformativeText("<b>Разработчик ДИПМаксМакс</b>");
     info_box.exec();
+}
+
+void MainWindow::getFoldersizeIterative(std::wstring rootFolder, unsigned long long &f_size) {
+    // Функция от пользователя Amit взята на
+    // https://stackoverflow.com/questions/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
+    // и переписана в итеративный вид
+    // Стек для хранения вложенных путей
+    QStack<std::wstring> folders;
+    folders.push(rootFolder);
+
+    while (!folders.empty()) {
+        std::wstring current_folder = folders.top();
+        folders.pop();
+
+        fsys::path folderPath(current_folder);
+        if (fsys::exists(folderPath)) {
+            fsys::directory_iterator end_itr;
+            for (fsys::directory_iterator dirIte(current_folder); dirIte != end_itr; ++dirIte) {
+                fsys::path filePath(dirIte->path());
+                try {
+                    if (!fsys::is_directory(dirIte->status())) {
+                        f_size += fsys::file_size(filePath);
+                    } else {
+                        folders.push(filePath.wstring());
+                    }
+                } catch (std::exception &e) {
+                    qDebug() << e.what();
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::delay(int n)
+{
+    QTime dieTime= QTime::currentTime().addMSecs(n);
+    while (QTime::currentTime() < dieTime)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
+
+QString MainWindow::getMinimizedFormSize(double &f_size) {
+    QString unit = "bytes";
+    QVector<QString> units {"Kbytes", "Mbytes", "Gbytes"};
+    int i = 0;
+    // Делим пока можем на 1024 и меняем соответсвтенно приставку
+    while (f_size > 1024 && i < 2) {
+        f_size /= 1024.0;
+        unit = units[i++];
+    }
+    if (i == 0)
+        return QString::number(f_size, 'f', 0) + " " + unit;
+    return QString::number(f_size, 'f', 2) + " " + unit;
 }
 

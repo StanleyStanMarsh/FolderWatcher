@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <iostream>
 #include <QMainWindow>
 #include <QSplitter>
 #include <QListView>
@@ -11,10 +12,19 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QDateTime>
+#include <QDebug>
+#include <QString>
+#include <QTime>
+#include <QStack>
+#include <QVector>
+#include <experimental/filesystem>
+#include <string>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+
+namespace fsys = std::experimental::filesystem;
 
 class MainWindow : public QMainWindow
 {
@@ -35,6 +45,13 @@ private slots:
     void on_action_8_triggered();
 
 private:
+    // Функция для получения размера директории
+    void getFoldersizeIterative(std::wstring rootFolder, unsigned long long &f_size);
+    // Функция задержки, n - время в мс
+    void delay(int n);
+    // Функция возвращающая размер в максимальной единице измерения (bytes -> Kbytes -> Mbytes -> Gbytes)
+    QString getMinimizedFormSize(double &f_size);
+
     Ui::MainWindow *ui;
 
     // Модель для взаимодействия с директориями

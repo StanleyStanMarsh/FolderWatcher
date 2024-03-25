@@ -20,6 +20,7 @@ FORMS += \
 
 CONFIG += lrelease
 CONFIG += embed_translations
+LIBS += -lstdc++fs
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
