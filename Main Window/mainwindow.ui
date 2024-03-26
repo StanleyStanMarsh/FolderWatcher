@@ -44,14 +44,7 @@
        </layout>
       </widget>
       <widget class="QWidget" name="gridLayoutWidget">
-       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0">
-        <item row="0" column="0">
-         <widget class="QPushButton" name="back_button">
-          <property name="text">
-           <string>&lt;- Назад</string>
-          </property>
-         </widget>
-        </item>
+       <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0">
         <item row="0" column="1">
          <widget class="QPushButton" name="main_info_button">
           <property name="text">
@@ -59,8 +52,12 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0" colspan="3">
-         <widget class="QListView" name="listView"/>
+        <item row="0" column="0">
+         <widget class="QPushButton" name="back_button">
+          <property name="text">
+           <string>&lt;- Назад</string>
+          </property>
+         </widget>
         </item>
         <item row="0" column="2">
          <widget class="QCheckBox" name="dir_size_box">
@@ -68,6 +65,28 @@
            <string>Размер директорий</string>
           </property>
          </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QComboBox" name="storages_box">
+          <property name="editable">
+           <bool>false</bool>
+          </property>
+          <property name="currentText">
+           <string/>
+          </property>
+          <property name="maxVisibleItems">
+           <number>3</number>
+          </property>
+          <property name="placeholderText">
+           <string>Выберите диск</string>
+          </property>
+          <property name="frame">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0" colspan="4">
+         <widget class="QListView" name="listView"/>
         </item>
        </layout>
       </widget>

@@ -8,12 +8,14 @@
 #include <QTreeView>
 #include <QDir>
 #include <QFileSystemModel>
+#include <QStorageInfo>
 #include <QStandardItemModel>
 #include <QMessageBox>
 #include <QDebug>
 #include <QDateTime>
 #include <QDebug>
 #include <QString>
+#include <QStringList>
 #include <QTime>
 #include <QStack>
 #include <QVector>
@@ -43,6 +45,8 @@ private slots:
     void showMainInfo();
     // Слот для открытия информационного сообщения
     void on_action_8_triggered();
+    // Слот для перехода в корень выбранного локального хранилища
+    void goToStorage(const QString &storage_path);
 
 private:
     // Функция для получения размера директории
@@ -57,6 +61,6 @@ private:
     // Модель для взаимодействия с директориями
     QFileSystemModel *dir;
     // модель работы с информацией о директории
-    QStandardItemModel *info;
+    QStandardItemModel *info;    
 };
 #endif // MAINWINDOW_H

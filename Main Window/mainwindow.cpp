@@ -22,12 +22,23 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableView->setModel(info);
 
+    // Ищем доступные локальные хранилища и добавляем их в комбо бокс
+    QStringList storages_paths;
+    foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
+        if (storage.isValid() && storage.isReady()) {
+            storages_paths << storage.rootPath();
+        }
+    }
+    ui->storages_box->addItems(storages_paths);
+
     // Коннектим двойное нажатие по папке/файлу к его открытию
     QObject::connect(ui->listView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(goDownDir(QModelIndex)));
     // Коннектим нажатие по кнопке с поднятием на одну папку наверх
     QObject::connect(ui->back_button, SIGNAL(clicked(bool)), this, SLOT(goUpDir()));
     // Коннектим нажатие по кнопке с отображением инфы
     QObject::connect(ui->main_info_button, SIGNAL(clicked(bool)), this, SLOT(showMainInfo()));
+    // Коннектим выбор доступного хранилища в комбо боксе с его открытием модели
+    QObject::connect(ui->storages_box, SIGNAL(textActivated(QString)), this, SLOT(goToStorage(QString)));
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
@@ -45,6 +56,13 @@ void MainWindow::goUpDir() {
     now_dir.cdUp();
     ui->listView->setRootIndex(dir->index(now_dir.absolutePath()));
     dir->setRootPath(now_dir.absolutePath());
+}
+
+void MainWindow::goToStorage(const QString &storage_path) {
+    // Назначаем новый корень для отображения
+    ui->listView->setRootIndex(dir->index(storage_path));
+    // Назначаем новый корень для самой модели
+    dir->setRootPath(storage_path);
 }
 
 void MainWindow::showMainInfo() {
@@ -92,11 +110,16 @@ void MainWindow::showMainInfo() {
                 // Переделываем слеши в бэкслеши для понятного формата для функции
                 std::wstring path_for_fsys = dir->filePath(fileIndex).replace('/', "\\\\").toStdWString();
 
-                getFoldersizeIterative(path_for_fsys, dir_size);
+                try {
+                    getFoldersizeIterative(path_for_fsys, dir_size);
+                    // Делаем читаемый размер
+                    double d_dir_size = dir_size;
+                    row << new QStandardItem(getMinimizedFormSize(d_dir_size));
+                } catch(std::exception &e) {
+                    // Вписываем сообщение об ошибке
+                    row << new QStandardItem("ОШИБКА");
+                }
 
-                // Делаем читаемый размер
-                double d_dir_size = dir_size;
-                row << new QStandardItem(getMinimizedFormSize(d_dir_size));
             }
             // Если галочки нет - в таблице для папок размер не указывается
             else
@@ -141,7 +164,8 @@ void MainWindow::getFoldersizeIterative(std::wstring rootFolder, unsigned long l
         fsys::path folderPath(current_folder);
         if (fsys::exists(folderPath)) {
             fsys::directory_iterator end_itr;
-            for (fsys::directory_iterator dirIte(current_folder); dirIte != end_itr; ++dirIte) {
+            for (fsys::directory_iterator dirIte(current_folder, fsys::directory_options::skip_permission_denied);
+                 dirIte != end_itr; ++dirIte) {
                 fsys::path filePath(dirIte->path());
                 try {
                     if (!fsys::is_directory(dirIte->status())) {
@@ -150,7 +174,7 @@ void MainWindow::getFoldersizeIterative(std::wstring rootFolder, unsigned long l
                         folders.push(filePath.wstring());
                     }
                 } catch (std::exception &e) {
-                    qDebug() << e.what();
+                    //qDebug() << e.what();
                 }
             }
         }
