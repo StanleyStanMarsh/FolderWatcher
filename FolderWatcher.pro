@@ -2,6 +2,11 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+QMAKE_TARGET_COMPANY = DIPMaxMax
+QMAKE_TARGET_PRODUCT = FolderWatcher
+QMAKE_TARGET_COPYRIGHT = DIPMaxMax Proj.
+VERSION = 0.2
+
 CONFIG += c++20
 
 # You can make your code fail to compile if it uses deprecated APIs.

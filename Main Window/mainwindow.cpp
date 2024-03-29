@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->listView->setModel(dir);
     ui->listView->setRootIndex(dir->index(QDir::currentPath()));
 
+    ui->path_line->setText(QDir::currentPath());
+
     // настройка модели работы с инфой о директориях
     info = new QStandardItemModel;
     ui->tableView->resizeColumnsToContents();
@@ -39,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->main_info_button, SIGNAL(clicked(bool)), this, SLOT(showMainInfo()));
     // Коннектим выбор доступного хранилища в комбо боксе с его открытием модели
     QObject::connect(ui->storages_box, SIGNAL(textActivated(QString)), this, SLOT(goToStorage(QString)));
+    // Коннектим изменение корневого пути в модели с его отображением в строке
+    QObject::connect(dir, SIGNAL(rootPathChanged(QString)), ui->path_line, SLOT(setText(QString)));
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
@@ -79,6 +83,7 @@ void MainWindow::showMainInfo() {
 
     if (ui->dir_size_box->isChecked()) {
         ui->info_label->setText("Молчать! Идет подсчет размера директорий");
+        ui->info_label->setStyleSheet("color: rgb(255, 165, 0)");
     }
 
     // Проходимся по всем файлам и печатаем информацию о них
@@ -128,6 +133,7 @@ void MainWindow::showMainInfo() {
 
         info->appendRow(row);
     }
+    ui->info_label->setStyleSheet("color: rgb(0, 0, 0)");
     ui->info_label->setText("Информация");
 }
 

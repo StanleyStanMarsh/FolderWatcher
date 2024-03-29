@@ -45,6 +45,28 @@
       </widget>
       <widget class="QWidget" name="gridLayoutWidget">
        <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0">
+        <item row="3" column="0" colspan="4">
+         <widget class="QListView" name="listView"/>
+        </item>
+        <item row="0" column="3">
+         <widget class="QComboBox" name="storages_box">
+          <property name="editable">
+           <bool>false</bool>
+          </property>
+          <property name="currentText">
+           <string/>
+          </property>
+          <property name="maxVisibleItems">
+           <number>3</number>
+          </property>
+          <property name="placeholderText">
+           <string>Выберите диск</string>
+          </property>
+          <property name="frame">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="1">
          <widget class="QPushButton" name="main_info_button">
           <property name="text">
@@ -66,27 +88,15 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="3">
-         <widget class="QComboBox" name="storages_box">
-          <property name="editable">
-           <bool>false</bool>
+        <item row="1" column="0" colspan="4">
+         <widget class="QLineEdit" name="path_line">
+          <property name="dragEnabled">
+           <bool>true</bool>
           </property>
-          <property name="currentText">
-           <string/>
-          </property>
-          <property name="maxVisibleItems">
-           <number>3</number>
-          </property>
-          <property name="placeholderText">
-           <string>Выберите диск</string>
-          </property>
-          <property name="frame">
+          <property name="readOnly">
            <bool>true</bool>
           </property>
          </widget>
-        </item>
-        <item row="2" column="0" colspan="4">
-         <widget class="QListView" name="listView"/>
         </item>
        </layout>
       </widget>
