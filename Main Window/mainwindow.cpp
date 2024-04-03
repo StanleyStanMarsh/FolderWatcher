@@ -33,11 +33,6 @@ MainWindow::MainWindow(QWidget *parent)
     }
     ui->storages_box->addItems(storages_paths);
 
-    //
-    // loading_window = new LoadingWindow();
-    // loading_window->setModal(true);
-    // loading_window->hide();
-
     // Объект для вычислений КС, заносим вычисления в отдельный поток
     HashSum *calculator = new HashSum(this);
     calculator->moveToThread(&hash_sum_thread);
@@ -258,7 +253,6 @@ void MainWindow::handleHashSumCalculations(QPair<HashSumRow, QString> result_pai
 void MainWindow::calcFileHashSumTriggered() {
     // открываем окно
     loading_window = new LoadingWindow();
-    // loading_window->setModal(true);
     loading_window->show();
     QPair<QModelIndexList, QFileSystemModel&> selected_files(ui->listView->selectionModel()->selectedIndexes(),
                                                             *dir);
