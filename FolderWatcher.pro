@@ -17,12 +17,14 @@ SOURCES += \
     'Main Window/mainwindow.cpp' \
     'Calculations/Hash Sum/HashSum.cpp' \
     'Loading Window/LoadingWindow.cpp' \
+    'Main Window/ShortcutsEventFilter.cpp' \
     main.cpp
 
 HEADERS += \
     'Main Window/mainwindow.h' \
     'Calculations/Hash Sum/HashSum.h' \
-    'Loading Window/LoadingWindow.h'
+    'Loading Window/LoadingWindow.h' \
+    'Main Window/ShortcutsEventFilter.h'
 
 FORMS += \
     'Main Window/mainwindow.ui'

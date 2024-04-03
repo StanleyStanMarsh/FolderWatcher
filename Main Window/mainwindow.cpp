@@ -11,6 +11,9 @@ MainWindow::MainWindow(QWidget *parent)
     dir->setRootPath(QDir::currentPath());
     ui->listView->setModel(dir);
     ui->listView->setRootIndex(dir->index(QDir::currentPath()));
+    // Отключаем горячие клавиши для listView
+    filter = new ShortcutsEventFilter(this);
+    ui->listView->installEventFilter(filter);
 
     ui->path_line->setText(QDir::currentPath());
 

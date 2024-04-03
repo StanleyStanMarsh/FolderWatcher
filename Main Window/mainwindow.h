@@ -25,6 +25,7 @@
 
 #include "../Calculations/Hash Sum/HashSum.h"
 #include "../Loading Window/LoadingWindow.h"
+#include "ShortcutsEventFilter.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -80,7 +81,10 @@ private:
     // Отдельный поток для контрольных сумм
     QThread hash_sum_thread;
 
-    //
+    // Окно загрузки
     LoadingWindow *loading_window;
+
+    // Фильтр событий отключающий горячие клавиши
+    ShortcutsEventFilter *filter;
 };
 #endif // MAINWINDOW_H
