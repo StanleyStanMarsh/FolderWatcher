@@ -61,7 +61,6 @@ QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorith
 
 }
 
-
 QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
 {
 
@@ -142,3 +141,32 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
     return hashString;
 }
 
+void HashSum::getHashSums(QPair<QModelIndexList, QFileSystemModel&> selected_files) {
+
+    QModelIndexList index_list = selected_files.first;
+    QFileSystemModel *dir = &selected_files.second;
+    // Таймер для подсчета времени вычислений
+    QElapsedTimer timer;
+    timer.start();
+
+    HashSumRow vec_rows;
+    // Заполнение строки HashSumRow значениями КС для выделенных папок и файлов
+    for (auto item : index_list) {
+        QString name;
+        QString hash_sum;
+        name = dir->fileName(item);
+        if (dir->isDir(item)) {
+            QString folder_path = dir->filePath(item);
+            folder_path.replace('/', "\\\\");
+            QString hash_string = this->collectAllCheckSumsInFolder(folder_path, CALG_SHA_256, ""); //или CALG_SHA_512, CALG_MD5, ...
+            QString folder_check_sum = this->calculateFolderCheckSum(folder_path, CALG_SHA_256, hash_string);
+            hash_sum = folder_check_sum;
+        }
+        else
+            hash_sum = this->calculateFileCheckSum(dir->filePath(item), CALG_SHA_256);
+        vec_rows.push_back(QPair<QString, QString>(name, hash_sum));
+    }
+    QPair<HashSumRow, QString> result_pair(vec_rows,
+                                                                 QString::number((double)timer.elapsed() / 1000., 'f', 3));
+    emit hashSumsReady(result_pair);
+}

@@ -16,10 +16,10 @@
 #include <QDebug>
 #include <QString>
 #include <QStringList>
-#include <QTime>
 #include <QStack>
 #include <QVector>
-#include <QElapsedTimer>
+#include <QThread>
+#include <QPair>
 #include <experimental/filesystem>
 #include <string>
 
@@ -50,8 +50,16 @@ private slots:
     void on_info_message_triggered();
     // Слот для перехода в корень выбранного локального хранилища
     void goToStorage(const QString &storage_path);
-    // Слот для вызова функций подсчета контрольных сумм
-    void on_calc_file_hash_sum_triggered();
+    // Слот для вызова сигнала returnHashSum :)))
+    void calcFileHashSumTriggered();
+
+public slots:
+    // Слот для принятия результатов подсчета контрольных сумм
+    void handleHashSumCalculations(QPair<HashSumRow, QString> result_pair);
+
+signals:
+    // Сигнал, который отправляет список при нажатии на ui->calc_file_hash_sum
+    void returnHashSum(QPair<QModelIndexList, QFileSystemModel&> selected_files);
 
 private:
     // Функция для получения размера директории
@@ -67,5 +75,8 @@ private:
     QFileSystemModel *dir;
     // модель работы с информацией о директории
     QStandardItemModel *info;
+
+    // Отдельный поток для контрольных сумм
+    QThread hash_sum_thread;
 };
 #endif // MAINWINDOW_H
