@@ -144,7 +144,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_action_8_triggered()
+void MainWindow::on_info_message_triggered()
 {
     QMessageBox info_box;
     info_box.setWindowTitle("О программе...");
@@ -206,5 +206,42 @@ QString MainWindow::getMinimizedFormSize(double &f_size) {
     if (i == 0)
         return QString::number(f_size, 'f', 0) + " " + unit;
     return QString::number(f_size, 'f', 2) + " " + unit;
+}
+
+
+void MainWindow::on_calc_file_hash_sum_triggered()
+{
+    info->clear();
+    info->setColumnCount(2);
+    info->setHorizontalHeaderLabels(QStringList{"name", "hash sum"});
+    // Объект для вычислений КС
+    HashSum calculator(this);
+
+    ui->info_label->setText("Молчать! Идет подсчет КОНТРОЛЬНЫХ СУММ!");
+    ui->info_label->setStyleSheet("color: rgb(255, 165, 0)");
+    delay(100);
+
+    // Таймер для подсчета времени вычислений
+    QElapsedTimer timer;
+    timer.start();
+
+    // Заполнение таблицы tableView значениями КС для выделенных в listView папок и файлов
+    for (auto item : ui->listView->selectionModel()->selectedIndexes()) {
+        QList<QStandardItem *> row;
+        row << new QStandardItem(dir->fileName(item));
+        if (dir->isDir(item)) {
+            QString folder_path = dir->filePath(item);
+            folder_path.replace('/', "\\\\");
+            QString hash_string = calculator.collectAllCheckSumsInFolder(folder_path, CALG_SHA_256, ""); //или CALG_SHA_512, CALG_MD5, ...
+            QString folder_check_sum = calculator.calculateFolderCheckSum(folder_path, CALG_SHA_256, hash_string);
+            row << new QStandardItem(folder_check_sum);
+        }
+        else
+            row << new QStandardItem(calculator.calculateFileCheckSum(dir->filePath(item), CALG_SHA_256));
+        info->appendRow(row);
+    }
+    ui->info_label->setStyleSheet("color: rgb(0, 0, 0)");
+    ui->info_label->setText("Информация. Время вычисления " +
+                            QString::number((double)timer.elapsed() / 1000., 'f', 3) + " c.");
 }
 

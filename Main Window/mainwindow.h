@@ -19,8 +19,11 @@
 #include <QTime>
 #include <QStack>
 #include <QVector>
+#include <QElapsedTimer>
 #include <experimental/filesystem>
 #include <string>
+
+#include "../Calculations/Hash Sum/HashSum.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -44,9 +47,11 @@ private slots:
     // Слот для вывода основной инфы о текущей директории в таблице
     void showMainInfo();
     // Слот для открытия информационного сообщения
-    void on_action_8_triggered();
+    void on_info_message_triggered();
     // Слот для перехода в корень выбранного локального хранилища
     void goToStorage(const QString &storage_path);
+    // Слот для вызова функций подсчета контрольных сумм
+    void on_calc_file_hash_sum_triggered();
 
 private:
     // Функция для получения размера директории
@@ -61,6 +66,6 @@ private:
     // Модель для взаимодействия с директориями
     QFileSystemModel *dir;
     // модель работы с информацией о директории
-    QStandardItemModel *info;    
+    QStandardItemModel *info;
 };
 #endif // MAINWINDOW_H
