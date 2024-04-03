@@ -5,7 +5,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QMAKE_TARGET_COMPANY = DIPMaxMax
 QMAKE_TARGET_PRODUCT = FolderWatcher
 QMAKE_TARGET_COPYRIGHT = DIPMaxMax Proj.
-VERSION = 0.6
+VERSION = 0.6.5
 
 CONFIG += c++20
 
@@ -16,11 +16,13 @@ CONFIG += c++20
 SOURCES += \
     'Main Window/mainwindow.cpp' \
     'Calculations/Hash Sum/HashSum.cpp' \
+    'Loading Window/LoadingWindow.cpp' \
     main.cpp
 
 HEADERS += \
     'Main Window/mainwindow.h' \
-    'Calculations/Hash Sum/HashSum.h'
+    'Calculations/Hash Sum/HashSum.h' \
+    'Loading Window/LoadingWindow.h'
 
 FORMS += \
     'Main Window/mainwindow.ui'
