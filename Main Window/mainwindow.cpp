@@ -50,6 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::returnHashSum, calculator, &HashSum::getHashSums);
     // Коннектим сигнал о завершении вычисления КС с внесением полученных данных в таблицу
     connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::handleHashSumCalculations);
+    // Коннектим сигнал о завершении вычисления КС с показом логов
+    connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::showHashSumLogs);
+    // Коннектим сигнал об ошибках со сбором ошибок
+    connect(calculator, &HashSum::errorOccured, this, &MainWindow::handleHashSumErrors);
 
     hash_sum_thread.start();
 
@@ -162,6 +166,8 @@ MainWindow::~MainWindow()
     delete dir;
     delete info;
     delete ui;
+    delete loading_window;
+    delete filter;
     hash_sum_thread.quit();
     hash_sum_thread.wait();
 }
@@ -230,7 +236,6 @@ QString MainWindow::getMinimizedFormSize(double &f_size) {
     return QString::number(f_size, 'f', 2) + " " + unit;
 }
 
-
 void MainWindow::handleHashSumCalculations(QPair<HashSumRow, QString> result_pair)
 {
     // Готовим таблицу для хэш сумм
@@ -254,10 +259,47 @@ void MainWindow::handleHashSumCalculations(QPair<HashSumRow, QString> result_pai
 }
 
 void MainWindow::calcFileHashSumTriggered() {
+    // очищаем лог
+    hash_sum_log = "";
     // открываем окно
     loading_window = new LoadingWindow();
     loading_window->show();
     QPair<QModelIndexList, QFileSystemModel&> selected_files(ui->listView->selectionModel()->selectedIndexes(),
                                                             *dir);
     emit returnHashSum(selected_files);
+}
+
+void MainWindow::handleHashSumErrors(const HashSumErrors &error, const QString &file_path) {
+    switch (error) {
+    case HashSumErrors::MakeHashSumFileError:
+        hash_sum_log += file_path + ": Не удалось создать файл контрольных сумм!\n";
+        break;
+    case HashSumErrors::DeleteHashSumFileError:
+        hash_sum_log += file_path + ": Не удалось удалить файл контрольных сумм!\n";
+        break;
+    case HashSumErrors::GetHashSumError:
+        hash_sum_log += file_path + ": Не удалось получить контрольную сумму файла!\n";
+        break;
+    case HashSumErrors::CreateHashError:
+        hash_sum_log += file_path + ": Не удалось создать хэш!\n";
+        break;
+    case HashSumErrors::ProviderAccessError:
+        hash_sum_log += file_path + ": Не удалось получить доступ к криптопровайдеру!\n";
+        break;
+    case HashSumErrors::OpenFileError:
+        hash_sum_log += file_path + ": Не удалось открыть файл для чтения!\n";
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::showHashSumLogs() {
+    QMessageBox info_box;
+    info_box.setWindowTitle("Логи вычисления контрольных сумм");
+    info_box.setBaseSize(200, 100);
+    info_box.setIcon(QMessageBox::Information);
+    if (hash_sum_log.isEmpty()) info_box.setText("Контрольные суммы успешно посчитаны");
+    else info_box.setText(hash_sum_log);
+    info_box.exec();
 }

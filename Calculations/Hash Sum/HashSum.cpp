@@ -10,8 +10,7 @@ QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgo
 
     if (hFind == INVALID_HANDLE_VALUE)
     {
-        QMessageBox::warning(parent, "Ошибка", "Файлов в данной папке не найдено!");
-        return QString();
+        return QString("ОШИБКА");
     }
 
     do
@@ -44,8 +43,9 @@ QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorith
 
     if (checksumsFile == INVALID_HANDLE_VALUE)
     {
-        QMessageBox::warning(parent, "Ошибка", "Не удалось создать файл контрольных сумм!");
-        return QString();
+        // QMessageBox::warning(parent, "Ошибка", "Не удалось создать файл контрольных сумм!");
+        emit errorOccured(HashSumErrors::MakeHashSumFileError, folderPath);
+        return QString("");
     }
 
     DWORD bytesWritten; //буфер с количеством вписанных уже байтов
@@ -54,9 +54,12 @@ QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorith
 
     QString folderCheckSum = calculateFileCheckSum(folderPath + QString("\\checksum.txt"), hashAlgorithm); //получаем КС папки
 
-    if (!DeleteFile((folderPath + QString("\\checksum.txt")).toStdWString().c_str())) //удаляем за собой врмененный файл
-        QMessageBox::warning(parent, "Ошибка", "Не удалось удалить файл контрольных сумм!");;
-
+    if (!DeleteFile((folderPath + QString("\\checksum.txt")).toStdWString().c_str())) { //удаляем за собой врмененный файл
+        // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
+        //                           "Не удалось удалить файл контрольных сумм!");
+        // warning->exec();
+        emit errorOccured(HashSumErrors::DeleteHashSumFileError, folderPath);
+    }
     return folderCheckSum; //КС папки
 
 }
@@ -113,28 +116,44 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
                     }
                     else
                     {
-                        QMessageBox::warning(parent, "Ошибка", "Не удалось получить контрольную сумму файла.");
+                        // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
+                                                  // "Не удалось получить контрольную сумму файла.");
+                        // warning->exec();
+                        // QMessageBox::warning(parent, "Ошибка", "Не удалось получить контрольную сумму файла.");
+                        emit errorOccured(HashSumErrors::GetHashSumError, filePath);
                     }
 
                     CryptDestroyHash(hHash);//уничтожаем хэш-объект
                 }
                 else
                 {
-                    QMessageBox::warning(parent, "Ошибка", "Не удалось создать хэш.");
+                    // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
+                                              // "Не удалось создать хэш.");
+                    // warning->exec();
+                    // QMessageBox::warning(parent, "Ошибка", "Не удалось создать хэш.");
+                    emit errorOccured(HashSumErrors::CreateHashError, filePath);
                 }
 
                 CryptReleaseContext(hCryptProv, 0); //освобождаем дескриптор криптопровайдера
             }
             else
             {
-                QMessageBox::warning(parent, "Ошибка", "Не удалось получить доступ к криптопровайдеру.");
+                // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
+                                          // "Не удалось получить доступ к криптопровайдеру.");
+                // warning->exec();
+                // QMessageBox::warning(parent, "Ошибка", "Не удалось получить доступ к криптопровайдеру.");
+                emit errorOccured(HashSumErrors::ProviderAccessError, filePath);
             }
 
             CloseHandle(hFile); //уничтожаем дескриптор
         }
         else
         {
-            QMessageBox::warning(parent, "Ошибка", "Не удалось открыть файл для чтения.");
+            // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
+                                      // "Не удалось открыть файл для чтения.");
+            // warning->exec();
+            // QMessageBox::warning(parent, "Ошибка", "Не удалось открыть файл для чтения.");
+            emit errorOccured(HashSumErrors::OpenFileError, filePath);
         }
     }
 
@@ -167,6 +186,6 @@ void HashSum::getHashSums(QPair<QModelIndexList, QFileSystemModel&> selected_fil
         vec_rows.push_back(QPair<QString, QString>(name, hash_sum));
     }
     QPair<HashSumRow, QString> result_pair(vec_rows,
-                                                                 QString::number((double)timer.elapsed() / 1000., 'f', 3));
+                                           QString::number((double)timer.elapsed() / 1000., 'f', 3));
     emit hashSumsReady(result_pair);
 }

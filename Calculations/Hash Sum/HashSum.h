@@ -15,10 +15,20 @@
 // Переименовываем вектор пар <название, контрольная сумма>
 using HashSumRow = QVector<QPair<QString, QString>>;
 
+enum HashSumErrors {
+    MakeHashSumFileError,
+    DeleteHashSumFileError,
+    GetHashSumError,
+    CreateHashError,
+    ProviderAccessError,
+    OpenFileError
+};
+
 class HashSum : public QObject
 {
     Q_OBJECT
     QWidget *parent;
+    QMessageBox *warning;
 public:
     HashSum(QWidget *_parent) { parent = _parent; }
     QString calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm);
@@ -32,5 +42,7 @@ public slots:
 signals:
     // Сигнал о завершении подсчета КС, передает КС и время вычисления
     void hashSumsReady(QPair<HashSumRow, QString> result_pair);
+    // Сигнал об ошибке
+    void errorOccured(const HashSumErrors &error, const QString &file_path);
 };
 #endif // HASHSUM_H

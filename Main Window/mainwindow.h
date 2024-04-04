@@ -54,10 +54,12 @@ private slots:
     void goToStorage(const QString &storage_path);
     // Слот для вызова сигнала returnHashSum :)))
     void calcFileHashSumTriggered();
-
-public slots:
     // Слот для принятия результатов подсчета контрольных сумм
     void handleHashSumCalculations(QPair<HashSumRow, QString> result_pair);
+    // Слот для перехвата ошибок при вычислении КС
+    void handleHashSumErrors(const HashSumErrors &error, const QString &file_path);
+    // Слот для отображения логов о вычислении КС
+    void showHashSumLogs();
 
 signals:
     // Сигнал, который отправляет список при нажатии на ui->calc_file_hash_sum
@@ -86,5 +88,8 @@ private:
 
     // Фильтр событий отключающий горячие клавиши
     ShortcutsEventFilter *filter;
+
+    // Лог для сбора ошибок при подсчете КС
+    QString hash_sum_log;
 };
 #endif // MAINWINDOW_H
