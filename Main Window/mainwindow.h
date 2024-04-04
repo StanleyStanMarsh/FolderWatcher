@@ -52,10 +52,14 @@ private slots:
     void on_info_message_triggered();
     // Слот для перехода в корень выбранного локального хранилища
     void goToStorage(const QString &storage_path);
+    // Слоты для передачи типа хэш алгоритма
+    void chooseSHA_256();
+    void chooseSHA_512();
+    void chooseMD5();
     // Слот для вызова сигнала returnHashSum :)))
-    void calcFileHashSumTriggered();
+    void calcFileHashSumTriggered(const ALG_ID &hashAlgorithm);
     // Слот для принятия результатов подсчета контрольных сумм
-    void handleHashSumCalculations(QPair<HashSumRow, QString> result_pair);
+    void handleHashSumCalculations(const HashSumRow &vec_rows, const QString &elapsed_time);
     // Слот для перехвата ошибок при вычислении КС
     void handleHashSumErrors(const HashSumErrors &error, const QString &file_path);
     // Слот для отображения логов о вычислении КС
@@ -63,7 +67,8 @@ private slots:
 
 signals:
     // Сигнал, который отправляет список при нажатии на ui->calc_file_hash_sum
-    void returnHashSum(QPair<QModelIndexList, QFileSystemModel&> selected_files);
+    void returnHashSum(const QModelIndexList& selected_files, const QFileSystemModel *dir_info,
+                       const ALG_ID &hashAlgorithm);
 
 private:
     // Функция для получения размера директории

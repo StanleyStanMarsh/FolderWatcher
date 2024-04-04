@@ -39,7 +39,7 @@ QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgo
 QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorithm, QString hashString)
 {
     // QDir::currentPath() - текущая директория в которой лежит исполняемый файл (FolderWatcher.exe)
-    HANDLE checksumsFile = CreateFile((QDir::currentPath() + QString("\\checksum.txt")).toStdWString().c_str(), GENERIC_WRITE, 0, NULL,
+    HANDLE checksumsFile = CreateFile((QDir::currentPath().replace('/', "\\\\") + QString("\\checksum.txt")).toStdWString().c_str(), GENERIC_WRITE, 0, NULL,
                                       OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); //дескриптор файла, куда загрузим все КС
 
     if (checksumsFile == INVALID_HANDLE_VALUE)
@@ -53,9 +53,9 @@ QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorith
     WriteFile(checksumsFile, hashString.utf16(), static_cast<DWORD>(hashString.size()), &bytesWritten, NULL); //вписываем строку КС в этот файл
     CloseHandle(checksumsFile); //уничтожаем дескриптор файла
 
-    QString folderCheckSum = calculateFileCheckSum(QDir::currentPath() + QString("\\checksum.txt"), hashAlgorithm); //получаем КС папки
+    QString folderCheckSum = calculateFileCheckSum(QDir::currentPath().replace('/', "\\\\") + QString("\\checksum.txt"), hashAlgorithm); //получаем КС папки
 
-    if (!DeleteFile((QDir::currentPath() + QString("\\checksum.txt")).toStdWString().c_str())) { //удаляем за собой врмененный файл
+    if (!DeleteFile((QDir::currentPath().replace('/', "\\\\") + QString("\\checksum.txt")).toStdWString().c_str())) { //удаляем за собой врмененный файл
         // Ошибка Не удалось удалить файл контрольных сумм!");
         emit errorOccured(HashSumErrors::DeleteHashSumFileError, folderPath);
     }
@@ -63,10 +63,8 @@ QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorith
 
 }
 
-QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
+QString HashSum::calculateFileCheckSum(QString filePath, const ALG_ID &hashAlgorithm)
 {
-
-    // qDebug() << filePath;
     QString hashString;
 
     if (!filePath.isEmpty())
@@ -108,10 +106,6 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
                         {
                             hashString.append(QString::number(static_cast<int>(buffer[i]), 16).rightJustified(2, '0')); //hex
                         }
-
-                        // QMessageBox::information(this, "Контрольная сумма", "Контрольная сумма файла: " + hashString);
-                        // qDebug() << hashString;
-
                     }
                     else
                     {
@@ -147,10 +141,10 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
     return hashString;
 }
 
-void HashSum::getHashSums(QPair<QModelIndexList, QFileSystemModel&> selected_files) {
-
-    QModelIndexList index_list = selected_files.first;
-    QFileSystemModel *dir = &selected_files.second;
+void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSystemModel *dir_info,
+                          const ALG_ID &hashAlgorithm) {
+    QModelIndexList index_list(selected_files);
+    const QFileSystemModel *dir = dir_info;
     // Таймер для подсчета времени вычислений
     QElapsedTimer timer;
     timer.start();
@@ -164,15 +158,13 @@ void HashSum::getHashSums(QPair<QModelIndexList, QFileSystemModel&> selected_fil
         if (dir->isDir(item)) {
             QString folder_path = dir->filePath(item);
             folder_path.replace('/', "\\\\");
-            QString hash_string = this->collectAllCheckSumsInFolder(folder_path, CALG_SHA_256, ""); //или CALG_SHA_512, CALG_MD5, ...
-            QString folder_check_sum = this->calculateFolderCheckSum(folder_path, CALG_SHA_256, hash_string);
+            QString hash_string = this->collectAllCheckSumsInFolder(folder_path, hashAlgorithm, ""); //или CALG_SHA_512, CALG_MD5, ...
+            QString folder_check_sum = this->calculateFolderCheckSum(folder_path, hashAlgorithm, hash_string);
             hash_sum = folder_check_sum;
         }
         else
-            hash_sum = this->calculateFileCheckSum(dir->filePath(item), CALG_SHA_256);
+            hash_sum = this->calculateFileCheckSum(dir->filePath(item), hashAlgorithm);
         vec_rows.push_back(QPair<QString, QString>(name, hash_sum));
     }
-    QPair<HashSumRow, QString> result_pair(vec_rows,
-                                           QString::number((double)timer.elapsed() / 1000., 'f', 3));
-    emit hashSumsReady(result_pair);
+    emit hashSumsReady(vec_rows, QString::number((double)timer.elapsed() / 1000., 'f', 3));
 }

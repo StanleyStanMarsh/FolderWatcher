@@ -121,9 +121,17 @@
     <property name="title">
      <string>Инструменты</string>
     </property>
+    <widget class="QMenu" name="menu">
+     <property name="title">
+      <string>Посчитать контрольную сумму</string>
+     </property>
+     <addaction name="actionSHA_256"/>
+     <addaction name="actionSHA_512"/>
+     <addaction name="actionMD5"/>
+    </widget>
     <addaction name="action_2"/>
     <addaction name="action_3"/>
-    <addaction name="calc_file_hash_sum"/>
+    <addaction name="menu"/>
    </widget>
    <widget class="QMenu" name="about">
     <property name="title">
@@ -148,14 +156,6 @@
     <string>Сохранить снапшот директории</string>
    </property>
   </action>
-  <action name="calc_file_hash_sum">
-   <property name="text">
-    <string>Посчитать контрольную сумму</string>
-   </property>
-   <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Выделите курсором файлы и папки, для которых необходимо посчитать контрольные суммы&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </action>
   <action name="action_6">
    <property name="text">
     <string>Возможности</string>
@@ -164,6 +164,21 @@
   <action name="info_message">
    <property name="text">
     <string>О программе...</string>
+   </property>
+  </action>
+  <action name="actionSHA_256">
+   <property name="text">
+    <string>SHA-256</string>
+   </property>
+  </action>
+  <action name="actionSHA_512">
+   <property name="text">
+    <string>SHA-512</string>
+   </property>
+  </action>
+  <action name="actionMD5">
+   <property name="text">
+    <string>MD5</string>
    </property>
   </action>
  </widget>

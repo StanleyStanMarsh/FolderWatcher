@@ -31,17 +31,18 @@ class HashSum : public QObject
     QMessageBox *warning;
 public:
     HashSum(QWidget *_parent) { parent = _parent; }
-    QString calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm);
+    QString calculateFileCheckSum(QString filePath, const ALG_ID &hashAlgorithm);
     QString collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgorithm, QString hashString);
     QString calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorithm, QString hashString);
 
 public slots:
     // Слот для подсчета КС
-    void getHashSums(QPair<QModelIndexList, QFileSystemModel&> selected_files);
+    void getHashSums(const QModelIndexList& selected_files, const QFileSystemModel *dir_info,
+                     const ALG_ID &hashAlgorithm);
 
 signals:
     // Сигнал о завершении подсчета КС, передает КС и время вычисления
-    void hashSumsReady(QPair<HashSumRow, QString> result_pair);
+    void hashSumsReady(const HashSumRow &vec_rows, const QString &elapsed_time);
     // Сигнал об ошибке
     void errorOccured(const HashSumErrors &error, const QString &file_path);
 };

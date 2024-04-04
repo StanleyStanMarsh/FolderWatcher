@@ -40,9 +40,11 @@ MainWindow::MainWindow(QWidget *parent)
     HashSum *calculator = new HashSum(this);
     calculator->moveToThread(&hash_sum_thread);
 
-    // Коннектим нажатие на calc_file_hash_sum к слоту-отправителю сигнала с данными о выделенных
+    // Коннектим нажатие на кнопки подсчета КС к слоту-отправителю сигнала с данными о выделенных
     // файлах и папках
-    connect(ui->calc_file_hash_sum, &QAction::triggered, this, &MainWindow::calcFileHashSumTriggered);
+    connect(ui->actionSHA_256, &QAction::triggered, this, &MainWindow::chooseSHA_256);
+    connect(ui->actionSHA_512, &QAction::triggered, this, &MainWindow::chooseSHA_512);
+    connect(ui->actionMD5, &QAction::triggered, this, &MainWindow::chooseMD5);
 
     // Коннектим завершение потока с планированием удаления "вычислителя" КС
     connect(&hash_sum_thread, &QThread::finished, calculator, &QObject::deleteLater);
@@ -236,7 +238,7 @@ QString MainWindow::getMinimizedFormSize(double &f_size) {
     return QString::number(f_size, 'f', 2) + " " + unit;
 }
 
-void MainWindow::handleHashSumCalculations(QPair<HashSumRow, QString> result_pair)
+void MainWindow::handleHashSumCalculations(const HashSumRow &vec_rows, const QString &elapsed_time)
 {
     // Готовим таблицу для хэш сумм
     info->clear();
@@ -244,7 +246,7 @@ void MainWindow::handleHashSumCalculations(QPair<HashSumRow, QString> result_pai
     info->setHorizontalHeaderLabels(QStringList{"name", "hash sum"});
 
     // Заполняем таблицу данными полученными вычислителем КС
-    for (auto item : result_pair.first) {
+    for (auto item : vec_rows) {
         QList<QStandardItem *> row;
         row << new QStandardItem(item.first);
         row << new QStandardItem(item.second);
@@ -253,20 +255,18 @@ void MainWindow::handleHashSumCalculations(QPair<HashSumRow, QString> result_pai
 
     ui->info_label->setStyleSheet("color: rgb(0, 0, 0)");
     ui->info_label->setText("Информация. Время вычисления " +
-                            result_pair.second + " c.");
+                            elapsed_time + " c.");
     // скрываем окно
     loading_window->hide();
 }
 
-void MainWindow::calcFileHashSumTriggered() {
+void MainWindow::calcFileHashSumTriggered(const ALG_ID &hashAlgorithm) {
     // очищаем лог
     hash_sum_log = "";
     // открываем окно
     loading_window = new LoadingWindow();
     loading_window->show();
-    QPair<QModelIndexList, QFileSystemModel&> selected_files(ui->listView->selectionModel()->selectedIndexes(),
-                                                            *dir);
-    emit returnHashSum(selected_files);
+    emit returnHashSum(ui->listView->selectionModel()->selectedIndexes(), dir, hashAlgorithm);
 }
 
 void MainWindow::handleHashSumErrors(const HashSumErrors &error, const QString &file_path) {
@@ -302,4 +302,16 @@ void MainWindow::showHashSumLogs() {
     if (hash_sum_log.isEmpty()) info_box.setText("Контрольные суммы успешно посчитаны");
     else info_box.setText(hash_sum_log);
     info_box.exec();
+}
+
+void MainWindow::chooseSHA_256() {
+    calcFileHashSumTriggered(CALG_SHA_256);
+}
+
+void MainWindow::chooseSHA_512() {
+    calcFileHashSumTriggered(CALG_SHA_512);
+}
+
+void MainWindow::chooseMD5() {
+    calcFileHashSumTriggered(CALG_MD5);
 }
