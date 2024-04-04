@@ -38,12 +38,13 @@ QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgo
 
 QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorithm, QString hashString)
 {
-    HANDLE checksumsFile = CreateFile((folderPath + QString("\\checksum.txt")).toStdWString().c_str(), GENERIC_WRITE, 0, NULL,
+    // QDir::currentPath() - текущая директория в которой лежит исполняемый файл (FolderWatcher.exe)
+    HANDLE checksumsFile = CreateFile((QDir::currentPath() + QString("\\checksum.txt")).toStdWString().c_str(), GENERIC_WRITE, 0, NULL,
                                       OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); //дескриптор файла, куда загрузим все КС
 
     if (checksumsFile == INVALID_HANDLE_VALUE)
     {
-        // QMessageBox::warning(parent, "Ошибка", "Не удалось создать файл контрольных сумм!");
+        // Ошибка Не удалось создать файл контрольных сумм!
         emit errorOccured(HashSumErrors::MakeHashSumFileError, folderPath);
         return QString("");
     }
@@ -52,12 +53,10 @@ QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorith
     WriteFile(checksumsFile, hashString.utf16(), static_cast<DWORD>(hashString.size()), &bytesWritten, NULL); //вписываем строку КС в этот файл
     CloseHandle(checksumsFile); //уничтожаем дескриптор файла
 
-    QString folderCheckSum = calculateFileCheckSum(folderPath + QString("\\checksum.txt"), hashAlgorithm); //получаем КС папки
+    QString folderCheckSum = calculateFileCheckSum(QDir::currentPath() + QString("\\checksum.txt"), hashAlgorithm); //получаем КС папки
 
-    if (!DeleteFile((folderPath + QString("\\checksum.txt")).toStdWString().c_str())) { //удаляем за собой врмененный файл
-        // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
-        //                           "Не удалось удалить файл контрольных сумм!");
-        // warning->exec();
+    if (!DeleteFile((QDir::currentPath() + QString("\\checksum.txt")).toStdWString().c_str())) { //удаляем за собой врмененный файл
+        // Ошибка Не удалось удалить файл контрольных сумм!");
         emit errorOccured(HashSumErrors::DeleteHashSumFileError, folderPath);
     }
     return folderCheckSum; //КС папки
@@ -116,10 +115,7 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
                     }
                     else
                     {
-                        // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
-                                                  // "Не удалось получить контрольную сумму файла.");
-                        // warning->exec();
-                        // QMessageBox::warning(parent, "Ошибка", "Не удалось получить контрольную сумму файла.");
+                        // Ошибка Не удалось получить контрольную сумму файла.
                         emit errorOccured(HashSumErrors::GetHashSumError, filePath);
                     }
 
@@ -127,10 +123,7 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
                 }
                 else
                 {
-                    // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
-                                              // "Не удалось создать хэш.");
-                    // warning->exec();
-                    // QMessageBox::warning(parent, "Ошибка", "Не удалось создать хэш.");
+                    // Ошибка Не удалось создать хэш.
                     emit errorOccured(HashSumErrors::CreateHashError, filePath);
                 }
 
@@ -138,10 +131,7 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
             }
             else
             {
-                // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
-                                          // "Не удалось получить доступ к криптопровайдеру.");
-                // warning->exec();
-                // QMessageBox::warning(parent, "Ошибка", "Не удалось получить доступ к криптопровайдеру.");
+                // Ошибка Не удалось получить доступ к криптопровайдеру.
                 emit errorOccured(HashSumErrors::ProviderAccessError, filePath);
             }
 
@@ -149,10 +139,7 @@ QString HashSum::calculateFileCheckSum(QString filePath, ALG_ID hashAlgorithm)
         }
         else
         {
-            // warning = new QMessageBox(QMessageBox::Warning, "ОШИБКА",
-                                      // "Не удалось открыть файл для чтения.");
-            // warning->exec();
-            // QMessageBox::warning(parent, "Ошибка", "Не удалось открыть файл для чтения.");
+            // Ошибка Не удалось открыть файл для чтения.
             emit errorOccured(HashSumErrors::OpenFileError, filePath);
         }
     }
