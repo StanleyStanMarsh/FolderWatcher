@@ -33,6 +33,12 @@ QT_END_NAMESPACE
 
 namespace fsys = std::experimental::filesystem;
 
+/**
+ * Главное окно приложения FolderWatcher
+ *
+ * @author Астафьев Игорь
+ * @author Якунин Дмитрий
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -42,59 +48,165 @@ public:
     ~MainWindow();
 
 private slots:
-    // Слот для перехода к выделенной папке
+    /**
+     * Слот для перехода к выделенной папке
+     *
+     * @param index Индекс элемента в модели данных,
+     * который соответствует директории, в которую пользователь
+     * хочет перейти "вниз".
+     */
     void goDownDir(const QModelIndex &index);
-    // Слот для возврата на одну директорию выше
+
+    /**
+     * Слот для возврата на одну директорию выше
+     *
+     */
     void goUpDir();
-    // Слот для вывода основной инфы о текущей директории в таблице
+
+    /**
+     * Слот для вывода основной инфы о текущей директории в таблице
+     *
+     */
     void showMainInfo();
-    // Слот для открытия информационного сообщения
-    void on_info_message_triggered();
-    // Слот для перехода в корень выбранного локального хранилища
+
+    /**
+     * Слот для открытия информационного сообщения
+     *
+     * Функция showMainInfo отвечает за вывод основной информации о
+     * файлах и папках в текущей директории в таблицу {@link #info}. Эта
+     * информация включает имя, дату последнего изменения, тип и размер
+     * каждого элемента. Для директорий размер может быть подсчитан, если
+     * это предусмотрено настройками интерфейса пользователя.
+     */
+    void on_info_message_triggered() const;
+
+    /**
+     * Слот для перехода в корень выбранного локального хранилища
+     *
+     * @param storage_path Путь к целевому носителю хранения,
+     * который станет новым корневым путем для отображения в
+     * виджете {@link #listView} и для модели {@link #dir}.
+     */
     void goToStorage(const QString &storage_path);
-    // Слоты для передачи типа хэш алгоритма
+
+    /**
+     * Слот для выбора алгоритма SHA-256
+     *
+     * @see #chooseSHA_512()
+     * @see #chooseMD5()
+     * @see #calcFileHashSumTriggered()
+     */
     void chooseSHA_256();
+
+    /**
+     * Слот для выбора алгоритма SHA-512
+     *
+     * @see #chooseSHA_256()
+     * @see #chooseMD5()
+     * @see #calcFileHashSumTriggered()
+     */
     void chooseSHA_512();
+
+    /**
+     * Слот для выбора алгоритма MD5
+     *
+     * @see #chooseSHA_256()
+     * @see #chooseSHA_512()
+     * @see #calcFileHashSumTriggered()
+     */
     void chooseMD5();
-    // Слот для вызова сигнала returnHashSum :)))
+
+    /**
+     * Слот для вызова сигнала returnHashSum
+     *
+     * @param hashAlgorithm Хэш алгоритм для подсчета контрольных сумм
+     * @see #returnHashSum()
+     */
     void calcFileHashSumTriggered(const ALG_ID &hashAlgorithm);
-    // Слот для принятия результатов подсчета контрольных сумм
+
+    /**
+     * Слот для принятия результатов подсчета контрольных сумм
+     *
+     * @param vec_rows Вектор пар <имя файла/папки, хеш-сумма>
+     * @param elapsed_time Потраченное на подсчеты время
+     */
     void handleHashSumCalculations(const HashSumRow &vec_rows, const QString &elapsed_time);
-    // Слот для перехвата ошибок при вычислении КС
+
+    /**
+     * Слот для перехвата ошибок при вычислении контрольных сумм
+     *
+     * @param error Возникающие ошибки
+     * @param file_path Путь до файла, при обработке которого возникла ошибка
+     * @see #HashSum::HashSumErrors
+     */
     void handleHashSumErrors(const HashSumErrors &error, const QString &file_path);
-    // Слот для отображения логов о вычислении КС
+
+    /**
+     * Слот для отображения логов о вычислении КС
+     *
+     * Функция showHashSumLogs отображает логи процесса вычисления
+     * контрольных сумм в диалоговом окне. Если лог пуст, функция
+     * информирует пользователя о том, что контрольные суммы посчитаны
+     * успешно. В противном случае показывается текст лога, содержащий
+     * возможные ошибки или сообщения о ходе выполнения операции.
+     */
     void showHashSumLogs();
 
 signals:
-    // Сигнал, который отправляет список при нажатии на ui->calc_file_hash_sum
+
+    /**
+     * Сигнал, который отправляет список при нажатии на кнопку вычисления
+     *
+     * @param selected_files Выделенные в отображении файлы и папки
+     * @param dir_info Основная файловая модель, в которой содержится необходимая информация о текущей директории
+     * @param hashAlgorithm Хэш алгоритм, которым будут считаться контрольные суммы
+     */
     void returnHashSum(const QModelIndexList& selected_files, const QFileSystemModel *dir_info,
                        const ALG_ID &hashAlgorithm);
 
 private:
-    // Функция для получения размера директории
+    /**
+     * Функция для получения размера директории
+     *
+     * @param[in] rootFolder путь до папки
+     * @param[out] f_size размер посчитанной папки
+     * @see [Оригинальная функция](https://stackoverflow.com/questions/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder)
+     */
     void getFoldersizeIterative(std::wstring rootFolder, unsigned long long &f_size);
-    // Функция задержки, n - время в мс
-    void delay(int n);
-    // Функция возвращающая размер в максимальной единице измерения (bytes -> Kbytes -> Mbytes -> Gbytes)
+
+    /**
+     * Функция задержки
+     *
+     * @param n время в миллисекундах
+     */
+    void delay(int n) const;
+
+    /**
+     * Функция для сокращения записи размера файла
+     *
+     * @param f_size размер файла/папки в байтах
+     * @return строка с размером файла/папки в сокращенном виде и единицей измерения ((K-, M-, G-)bytes)
+     */
     QString getMinimizedFormSize(double &f_size);
 
+    /// Графическая форма окна
     Ui::MainWindow *ui;
 
-    // Модель для взаимодействия с директориями
+    /// Модель для взаимодействия с директориями
     QFileSystemModel *dir;
-    // модель работы с информацией о директории
+    /// Модель работы с информацией о директории
     QStandardItemModel *info;
 
-    // Отдельный поток для контрольных сумм
+    /// Отдельный поток для контрольных сумм
     QThread hash_sum_thread;
 
-    // Окно загрузки
+    /// Окно загрузки
     LoadingWindow *loading_window;
 
-    // Фильтр событий отключающий горячие клавиши
+    /// Фильтр событий отключающий горячие клавиши
     ShortcutsEventFilter *filter;
 
-    // Лог для сбора ошибок при подсчете КС
+    /// Лог для сбора ошибок при подсчете КС
     QString hash_sum_log;
 };
 #endif // MAINWINDOW_H

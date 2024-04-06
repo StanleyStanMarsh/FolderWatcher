@@ -174,7 +174,7 @@ MainWindow::~MainWindow()
     hash_sum_thread.wait();
 }
 
-void MainWindow::on_info_message_triggered()
+void MainWindow::on_info_message_triggered() const
 {
     QMessageBox info_box;
     info_box.setWindowTitle("О программе...");
@@ -217,7 +217,7 @@ void MainWindow::getFoldersizeIterative(std::wstring rootFolder, unsigned long l
     }
 }
 
-void MainWindow::delay(int n)
+void MainWindow::delay(int n) const
 {
     QTime dieTime= QTime::currentTime().addMSecs(n);
     while (QTime::currentTime() < dieTime)
@@ -287,7 +287,8 @@ void MainWindow::handleHashSumErrors(const HashSumErrors &error, const QString &
         hash_sum_log += file_path + ": Не удалось получить доступ к криптопровайдеру!\n";
         break;
     case HashSumErrors::OpenFileError:
-        hash_sum_log += file_path + ": Не удалось открыть файл для чтения!\n";
+        hash_sum_log += file_path + ": Не удалось открыть файл для чтения или получить"
+                                    "доступ к файлам папки!\n";
         break;
     default:
         break;

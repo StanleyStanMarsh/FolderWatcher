@@ -3,7 +3,6 @@
 
 QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgorithm, QString hashString)
 {
-
     WIN32_FIND_DATA findFileData; //информацция о найденных файлах
 
     HANDLE hFind = FindFirstFile((folderPath + "\\*").toStdWString().c_str(), &findFileData); //дескриптор 1 найденного файла, * - найти любой файл
@@ -33,33 +32,6 @@ QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgo
 
     FindClose(hFind); //уничтожаем дескриптор обхода
     return hashString; //получившаяся строка КС файлов
-
-}
-
-QString HashSum::calculateFolderCheckSum(QString folderPath, ALG_ID hashAlgorithm, QString hashString)
-{
-    // QDir::currentPath() - текущая директория в которой лежит исполняемый файл (FolderWatcher.exe)
-    HANDLE checksumsFile = CreateFile((QDir::currentPath().replace('/', "\\\\") + QString("\\checksum.txt")).toStdWString().c_str(), GENERIC_WRITE, 0, NULL,
-                                      OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); //дескриптор файла, куда загрузим все КС
-
-    if (checksumsFile == INVALID_HANDLE_VALUE)
-    {
-        // Ошибка Не удалось создать файл контрольных сумм!
-        emit errorOccured(HashSumErrors::MakeHashSumFileError, folderPath);
-        return QString("");
-    }
-
-    DWORD bytesWritten; //буфер с количеством вписанных уже байтов
-    WriteFile(checksumsFile, hashString.utf16(), static_cast<DWORD>(hashString.size()), &bytesWritten, NULL); //вписываем строку КС в этот файл
-    CloseHandle(checksumsFile); //уничтожаем дескриптор файла
-
-    QString folderCheckSum = calculateFileCheckSum(QDir::currentPath().replace('/', "\\\\") + QString("\\checksum.txt"), hashAlgorithm); //получаем КС папки
-
-    if (!DeleteFile((QDir::currentPath().replace('/', "\\\\") + QString("\\checksum.txt")).toStdWString().c_str())) { //удаляем за собой врмененный файл
-        // Ошибка Не удалось удалить файл контрольных сумм!");
-        emit errorOccured(HashSumErrors::DeleteHashSumFileError, folderPath);
-    }
-    return folderCheckSum; //КС папки
 
 }
 
@@ -141,6 +113,52 @@ QString HashSum::calculateFileCheckSum(QString filePath, const ALG_ID &hashAlgor
     return hashString;
 }
 
+QString HashSum::calculateStringHash(QString hashString, ALG_ID hashAlgorithm)
+{
+    HCRYPTPROV hCryptProv = NULL;
+    HCRYPTHASH hHash = NULL;
+
+    if (!CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
+        return QString("");
+    }
+
+    if (!CryptCreateHash(hCryptProv, hashAlgorithm, 0, 0, &hHash)) {
+        CryptReleaseContext(hCryptProv, 0);
+        emit errorOccured(HashSumErrors::ProviderAccessError, "");
+        return QString("");
+    }
+
+    if (!CryptHashData(hHash, (BYTE*)hashString.toStdWString().c_str(), hashString.length(), 0)) {
+        CryptDestroyHash(hHash);
+        CryptReleaseContext(hCryptProv, 0);
+        return QString("");
+    }
+
+    // Получение размера хэша
+    DWORD cbHashSize;
+    DWORD dwDataLen = sizeof(DWORD);
+    if (!CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE*)&cbHashSize, &dwDataLen, 0)) {
+        CryptDestroyHash(hHash);
+        CryptReleaseContext(hCryptProv, 0);
+        emit errorOccured(HashSumErrors::GetHashSumError, "");
+        return QString("");
+    }
+
+    // Получение самого хэш значения
+    QByteArray hashOutput(cbHashSize, 0);
+    if (!CryptGetHashParam(hHash, HP_HASHVAL, reinterpret_cast<BYTE*>(hashOutput.data()), &cbHashSize, 0)) {
+        CryptDestroyHash(hHash);
+        CryptReleaseContext(hCryptProv, 0);
+        emit errorOccured(HashSumErrors::GetHashSumError, "");
+        return QString("");
+    }
+
+    CryptDestroyHash(hHash);
+    CryptReleaseContext(hCryptProv, 0);
+
+    return QString::fromLatin1(hashOutput.toHex());
+}
+
 void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSystemModel *dir_info,
                           const ALG_ID &hashAlgorithm) {
     QModelIndexList index_list(selected_files);
@@ -157,9 +175,25 @@ void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSyst
         name = dir->fileName(item);
         if (dir->isDir(item)) {
             QString folder_path = dir->filePath(item);
+
+            QDir directory(folder_path);
+            if (directory.exists() && directory.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries).count() == 0)
+            {
+                qDebug() << "Пустая папка!";
+                return;
+            }
+
+
             folder_path.replace('/', "\\\\");
             QString hash_string = this->collectAllCheckSumsInFolder(folder_path, hashAlgorithm, ""); //или CALG_SHA_512, CALG_MD5, ...
-            QString folder_check_sum = this->calculateFolderCheckSum(folder_path, hashAlgorithm, hash_string);
+            if (hash_string == "")
+            {
+                emit errorOccured(HashSumErrors::OpenFileError, folder_path);
+                // QMessageBox::warning(this, "Контрольная сумма", "Не удалось получить доступ к файлам папки"); //если нет разрешения на открытие файла или возникли ошибки
+                // return;
+
+            }
+            QString folder_check_sum = this->calculateStringHash(hash_string, hashAlgorithm);
             hash_sum = folder_check_sum;
         }
         else
@@ -168,3 +202,5 @@ void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSyst
     }
     emit hashSumsReady(vec_rows, QString::number((double)timer.elapsed() / 1000., 'f', 3));
 }
+
+
