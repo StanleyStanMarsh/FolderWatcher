@@ -36,8 +36,8 @@ namespace fsys = std::experimental::filesystem;
 /**
  * Главное окно приложения FolderWatcher
  *
- * @author Астафьев Игорь
- * @author Якунин Дмитрий
+ * @author [Астафьев Игорь](https://github.com/StanleyStanMarsh)
+ * @author [Якунин Дмитрий](https://github.com/tutibase)
  */
 class MainWindow : public QMainWindow
 {

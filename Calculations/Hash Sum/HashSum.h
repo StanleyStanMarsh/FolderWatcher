@@ -41,7 +41,7 @@ enum HashSumErrors {
  *
  * В классе реализованы методы для подсчета контрольных сумм папок и файлов, сигналы для возникающих ошибок
  *
- * @author Черепнов Максим
+ * @author [Черепнов Максим](https://github.com/aofitasotr)
  */
 class HashSum : public QObject
 {
