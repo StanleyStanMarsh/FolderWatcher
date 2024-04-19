@@ -23,3 +23,15 @@ FolderWatcher - это программное обеспечение для ср
 
 ## Разработка
 Программа разработана на Qt C++, использует [Qt](https://doc.qt.io/) версии 6 и среду разработки Qt Creator. Сборка проекта осуществляется с помощью qmake. Код включает в себя основной класс главного окна [MainWindow](https://github.com/StanleyStanMarsh/FolderWatcher/blob/master/Main%20Window/mainwindow.h), наследующийся от QMainWindow, и класс [HashSum](https://github.com/StanleyStanMarsh/FolderWatcher/blob/master/Calculations/Hash%20Sum/HashSum.h) для вычисления контрольных сумм файлов и папок, использующий [Win32 API](https://learn.microsoft.com/en-us/windows/win32/api/) и являющийся производным от QObject. Методы экземпляра класса HashSum запускаются в отдельном [потоке](https://github.com/StanleyStanMarsh/FolderWatcher/commit/9d801ad8192f70f4f61bdf309f03a8ef477ae9a3) для оптимизации производительности.
+
+## Лицензия (License)
+Shield: [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
+
+This work is licensed under a
+[Creative Commons Attribution-NonCommercial 4.0 International License][cc-by-nc].
+
+[![CC BY-NC 4.0][cc-by-nc-image]][cc-by-nc]
+
+[cc-by-nc]: https://creativecommons.org/licenses/by-nc/4.0/
+[cc-by-nc-image]: https://licensebuttons.net/l/by-nc/4.0/88x31.png
+[cc-by-nc-shield]: https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg
