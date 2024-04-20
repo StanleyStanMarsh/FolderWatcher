@@ -40,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent)
     HashSum *calculator = new HashSum(this);
     calculator->moveToThread(&hash_sum_thread);
 
+    loading_window = new LoadingWindow();
+    loading_window->hide();
+
     // Коннектим нажатие на кнопки подсчета КС к слоту-отправителю сигнала с данными о выделенных
     // файлах и папках
     connect(ui->actionSHA_256, &QAction::triggered, this, &MainWindow::chooseSHA_256);
@@ -60,15 +63,15 @@ MainWindow::MainWindow(QWidget *parent)
     hash_sum_thread.start();
 
     // Коннектим двойное нажатие по папке/файлу к его открытию
-    QObject::connect(ui->listView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(goDownDir(QModelIndex)));
+    connect(ui->listView, &QListView::doubleClicked, this, &MainWindow::goDownDir);
     // Коннектим нажатие по кнопке с поднятием на одну папку наверх
-    QObject::connect(ui->back_button, SIGNAL(clicked(bool)), this, SLOT(goUpDir()));
+    connect(ui->back_button, &QPushButton::clicked, this, &MainWindow::goUpDir);
     // Коннектим нажатие по кнопке с отображением инфы
-    QObject::connect(ui->main_info_button, SIGNAL(clicked(bool)), this, SLOT(showMainInfo()));
+    connect(ui->main_info_button, &QPushButton::clicked, this, &MainWindow::showMainInfo);
     // Коннектим выбор доступного хранилища в комбо боксе с его открытием модели
-    QObject::connect(ui->storages_box, SIGNAL(textActivated(QString)), this, SLOT(goToStorage(QString)));
+    connect(ui->storages_box, &QComboBox::textActivated, this, &MainWindow::goToStorage);
     // Коннектим изменение корневого пути в модели с его отображением в строке
-    QObject::connect(dir, SIGNAL(rootPathChanged(QString)), ui->path_line, SLOT(setText(QString)));
+    connect(dir, &QFileSystemModel::rootPathChanged, ui->path_line, &QLineEdit::setText);
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
@@ -264,7 +267,6 @@ void MainWindow::calcFileHashSumTriggered(const ALG_ID &hashAlgorithm) {
     // очищаем лог
     hash_sum_log = "";
     // открываем окно
-    loading_window = new LoadingWindow();
     loading_window->show();
     emit returnHashSum(ui->listView->selectionModel()->selectedIndexes(), dir, hashAlgorithm);
 }
