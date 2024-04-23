@@ -40,6 +40,11 @@ MainWindow::MainWindow(QWidget *parent)
     HashSum *calculator = new HashSum(this);
     calculator->moveToThread(&hash_sum_thread);
 
+    // Заносим логгер в отдельный поток
+    Logger *logger = new Logger(this);
+    logger->moveToThread(&logger_thread);
+
+    // Создаем окно загрузки и скрываем его
     loading_window = new LoadingWindow();
     loading_window->hide();
 
@@ -55,12 +60,22 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::returnHashSum, calculator, &HashSum::getHashSums);
     // Коннектим сигнал о завершении вычисления КС с внесением полученных данных в таблицу
     connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::handleHashSumCalculations);
-    // Коннектим сигнал о завершении вычисления КС с показом логов
-    connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::showHashSumLogs);
-    // Коннектим сигнал об ошибках со сбором ошибок
-    connect(calculator, &HashSum::errorOccured, this, &MainWindow::handleHashSumErrors);
+
+    // Коннектим завершение потока с планированием удаления логгера
+    connect(&logger_thread, &QThread::finished, logger, &QObject::deleteLater);
+    // Коннектим сигнал о возникшей ошибке с логом
+    connect(calculator, &HashSum::errorOccured, &Logger::logHashSumToFile);
+    // Коннектим сигнал о возникшей ошибке с логом
+    connect(this, &MainWindow::errorOccured, &Logger::logSizeToFile);
+
+    // // Коннектим сигнал о завершении вычисления КС с показом логов
+    // connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::showHashSumLogs);
+    // // Коннектим сигнал об ошибках со сбором ошибок
+    // connect(calculator, &HashSum::errorOccured, this, &MainWindow::handleHashSumErrors);
 
     hash_sum_thread.start();
+
+    logger_thread.start();
 
     // Коннектим двойное нажатие по папке/файлу к его открытию
     connect(ui->listView, &QListView::doubleClicked, this, &MainWindow::goDownDir);
@@ -152,6 +167,7 @@ void MainWindow::showMainInfo() {
                 } catch(std::exception &e) {
                     // Вписываем сообщение об ошибке
                     row << new QStandardItem("ОШИБКА");
+                    emit errorOccured(e, dir->filePath(fileIndex));
                 }
 
             }
@@ -175,6 +191,8 @@ MainWindow::~MainWindow()
     delete filter;
     hash_sum_thread.quit();
     hash_sum_thread.wait();
+    logger_thread.quit();
+    logger_thread.wait();
 }
 
 void MainWindow::on_info_message_triggered() const
@@ -213,7 +231,8 @@ void MainWindow::getFoldersizeIterative(std::wstring rootFolder, unsigned long l
                         folders.push(filePath.wstring());
                     }
                 } catch (std::exception &e) {
-                    //qDebug() << e.what();
+                    // записываем в лог ошибки
+                    emit errorOccured(e, QString::fromStdString(filePath.string()));
                 }
             }
         }
@@ -318,3 +337,10 @@ void MainWindow::chooseSHA_512() {
 void MainWindow::chooseMD5() {
     calcFileHashSumTriggered(CALG_MD5);
 }
+
+void MainWindow::on_show_log_2_triggered()
+{
+    // NOTE: открываем файл с логами (не факт что работает, так и не смог протестить)
+    QDesktopServices::openUrl(QUrl::fromLocalFile("log.txt"));
+}
+

@@ -46,7 +46,7 @@ enum HashSumErrors {
 class HashSum : public QObject
 {
     Q_OBJECT
-    QWidget *parent;
+    [[maybe_unused]] QWidget *parent;
     QMessageBox *warning;
 public:
     HashSum(QWidget *_parent) { parent = _parent; }

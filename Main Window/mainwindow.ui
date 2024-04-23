@@ -24,7 +24,7 @@
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -34,7 +34,7 @@
            <string>Информация</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -48,7 +48,7 @@
         <item row="3" column="0" colspan="4">
          <widget class="QListView" name="listView">
           <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
+           <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
           </property>
          </widget>
         </item>
@@ -139,6 +139,7 @@
     </property>
     <addaction name="separator"/>
     <addaction name="action_6"/>
+    <addaction name="show_log_2"/>
     <addaction name="separator"/>
     <addaction name="info_message"/>
    </widget>
@@ -179,6 +180,16 @@
   <action name="actionMD5">
    <property name="text">
     <string>MD5</string>
+   </property>
+  </action>
+  <action name="show_log">
+   <property name="text">
+    <string>Лог с ошибками</string>
+   </property>
+  </action>
+  <action name="show_log_2">
+   <property name="text">
+    <string>Показать логи</string>
    </property>
   </action>
  </widget>

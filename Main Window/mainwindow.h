@@ -20,12 +20,14 @@
 #include <QVector>
 #include <QThread>
 #include <QPair>
+#include <QDesktopServices>
 #include <experimental/filesystem>
 #include <string>
 
 #include "../Calculations/Hash Sum/HashSum.h"
 #include "../Loading Window/LoadingWindow.h"
 #include "ShortcutsEventFilter.h"
+#include "../Logger/Logger.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -66,17 +68,16 @@ private slots:
     /**
      * Слот для вывода основной инфы о текущей директории в таблице
      *
-     */
-    void showMainInfo();
-
-    /**
-     * Слот для открытия информационного сообщения
-     *
      * Функция showMainInfo отвечает за вывод основной информации о
      * файлах и папках в текущей директории в таблицу {@link #info}. Эта
      * информация включает имя, дату последнего изменения, тип и размер
      * каждого элемента. Для директорий размер может быть подсчитан, если
      * это предусмотрено настройками интерфейса пользователя.
+     */
+    void showMainInfo();
+
+    /**
+     * Слот для открытия информационного сообщения
      */
     void on_info_message_triggered() const;
 
@@ -139,7 +140,7 @@ private slots:
      * @param file_path Путь до файла, при обработке которого возникла ошибка
      * @see #HashSum::HashSumErrors
      */
-    void handleHashSumErrors(const HashSumErrors &error, const QString &file_path);
+    [[maybe_unused]] void handleHashSumErrors(const HashSumErrors &error, const QString &file_path);
 
     /**
      * Слот для отображения логов о вычислении КС
@@ -150,7 +151,13 @@ private slots:
      * успешно. В противном случае показывается текст лога, содержащий
      * возможные ошибки или сообщения о ходе выполнения операции.
      */
-    void showHashSumLogs();
+    [[maybe_unused]] void showHashSumLogs();
+
+    // FIXME: функция не работает как и сам объект
+    /**
+     * Слот для открытия файла логов
+     */
+    void on_show_log_2_triggered();
 
 signals:
 
@@ -163,6 +170,8 @@ signals:
      */
     void returnHashSum(const QModelIndexList& selected_files, const QFileSystemModel *dir_info,
                        const ALG_ID &hashAlgorithm);
+
+    void errorOccured(const std::exception &e, const QString &file_path);
 
 private:
     /**
@@ -199,6 +208,9 @@ private:
 
     /// Отдельный поток для контрольных сумм
     QThread hash_sum_thread;
+
+    /// Отдельный поток для ведения логов
+    QThread logger_thread;
 
     /// Окно загрузки
     LoadingWindow *loading_window;
