@@ -42,6 +42,8 @@ FolderWatcher - это программное обеспечение для ср
 | revert   | Откат на предыдущие коммиты                                     |
 | style	   | Правки по кодстайлу (табы, отступы, точки, запятые и т.д.)      |
 
+![image](https://github.com/StanleyStanMarsh/FolderWatcher/assets/96591356/f2fa0409-11df-40e7-96c9-a79eec80292c)
+
 ## Лицензия (License)
 Shield: [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
 
