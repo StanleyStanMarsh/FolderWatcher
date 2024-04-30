@@ -52,7 +52,7 @@ class HashSum : public QObject
 public:
     friend class Snapshot;
     HashSum(QWidget *_parent) { parent = _parent; }
-    HashSum(){m_tmp = 0;};
+    HashSum(){ m_tmp = 0; }
 
     /**
      * Метод для вычисления контрольной суммы файла
