@@ -130,7 +130,7 @@
      <addaction name="actionMD5"/>
     </widget>
     <addaction name="action_2"/>
-    <addaction name="action_3"/>
+    <addaction name="actionSaveSnap"/>
     <addaction name="menu"/>
    </widget>
    <widget class="QMenu" name="about">
@@ -152,7 +152,7 @@
     <string>Загрузить снапшот директории</string>
    </property>
   </action>
-  <action name="action_3">
+  <action name="actionSaveSnap">
    <property name="text">
     <string>Сохранить снапшот директории</string>
    </property>

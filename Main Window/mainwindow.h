@@ -23,11 +23,16 @@
 #include <QDesktopServices>
 #include <experimental/filesystem>
 #include <string>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlTableModel>
+#include <QSqlRecord>
 
 #include "../Calculations/Hash Sum/HashSum.h"
 #include "../Loading Window/LoadingWindow.h"
 #include "ShortcutsEventFilter.h"
 #include "../Logger/Logger.h"
+#include "../Calculations/Snapshots/snapshot.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -80,6 +85,11 @@ private slots:
      * Слот для открытия информационного сообщения
      */
     void on_info_message_triggered() const;
+
+    /**
+     * Слот для сохранения снапшота из меню
+     */
+    void on_actionSaveSnap_triggered() const;
 
     /**
      * Слот для перехода в корень выбранного локального хранилища
@@ -220,5 +230,10 @@ private:
 
     /// Лог для сбора ошибок при подсчете КС
     QString hash_sum_log;
+
+    /// Работа с БД
+    QSqlDatabase db;
+    QSqlQuery *query;
+    QSqlTableModel *SQLmodel;
 };
 #endif // MAINWINDOW_H
