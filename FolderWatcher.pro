@@ -18,6 +18,7 @@ SOURCES += \
     'Calculations/Hash Sum/HashSum.cpp' \
     'Loading Window/LoadingWindow.cpp' \
     'Main Window/ShortcutsEventFilter.cpp' \
+    Calculations/Snapshots/snapshot.cpp \
     Logger/Logger.cpp \
     main.cpp
 
@@ -26,6 +27,7 @@ HEADERS += \
     'Calculations/Hash Sum/HashSum.h' \
     'Loading Window/LoadingWindow.h' \
     'Main Window/ShortcutsEventFilter.h' \
+    Calculations/Snapshots/snapshot.h \
     Logger/Logger.h
 
 FORMS += \

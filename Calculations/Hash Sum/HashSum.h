@@ -48,8 +48,11 @@ class HashSum : public QObject
     Q_OBJECT
     [[maybe_unused]] QWidget *parent;
     QMessageBox *warning;
+    int m_tmp;
 public:
+    friend class Snapshot;
     HashSum(QWidget *_parent) { parent = _parent; }
+    HashSum(){m_tmp = 0;};
 
     /**
      * Метод для вычисления контрольной суммы файла
