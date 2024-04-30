@@ -87,6 +87,23 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->storages_box, &QComboBox::textActivated, this, &MainWindow::goToStorage);
     // Коннектим изменение корневого пути в модели с его отображением в строке
     connect(dir, &QFileSystemModel::rootPathChanged, ui->path_line, &QLineEdit::setText);
+
+    // Настройка работы с БД
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("./testDB.db");
+    if (db.open()) qDebug("opened");
+    else qDebug("not opened");
+
+    query = new QSqlQuery(db);
+    //query->exec("DROP TABLE IF EXISTS Snaps;");
+    query->exec("CREATE TABLE IF NOT EXISTS Snaps(DirectoryPath TEXT, SnapshotPath TEXT, SaveDate DATE);");
+
+    SQLmodel = new QSqlTableModel(this, db);
+    SQLmodel->setTable("Snaps");
+    SQLmodel->select();
+    SQLmodel->submitAll();
+    SQLmodel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    //ui->tableView->setModel(SQLmodel);
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
@@ -344,3 +361,22 @@ void MainWindow::on_show_log_2_triggered()
     QDesktopServices::openUrl(QUrl::fromLocalFile("log.txt"));
 }
 
+void MainWindow::on_actionSaveSnap_triggered() const
+{
+    // имя файла - текущее время
+    QString fileName = QDateTime::currentDateTime().toString("hhmmsszzzddMMyyyy");
+
+    // создаем снапшот
+    Snapshot snap(dir->rootPath(), CALG_SHA_256);
+    snap.writeToFile("./snapshots/" + fileName);
+
+    // создаем запись о новом снапшоте и добавляем  в БД
+    QSqlRecord record = SQLmodel->record();
+    record.setValue("DirectoryPath", dir->rootPath());
+    record.setValue("SnapshotPath", QDir::currentPath() + "/snapshots/" + fileName + ".json");
+    record.setValue("SaveDate", QDateTime::currentDateTime());
+
+    SQLmodel->setFilter("");
+    SQLmodel->insertRecord(SQLmodel->rowCount(), record);
+    SQLmodel->submitAll();
+}
