@@ -15,14 +15,25 @@ Snapshot::Snapshot(QString dir_path, ALG_ID hash_algorithm)
     QString hash_sum;
     int counter = 0;
     // сбор внутренних файлов, расчет размера папок, контрольных сумм
-    collectInnerFilesInDir(dir_path, inner_files, result, counter, hash_sum);
-    m_inner_files = result;
-    m_Hash_sum = m_hash.calculateStringHash(m_Hash_sum,  m_hash_algorithm);
+    if(info.isDir())
+    {
+        m_is_dir = true;
+        collectInnerFilesInDir(dir_path, inner_files, result, counter, hash_sum);
+        m_inner_files = result;
+        m_Hash_sum = m_hash.calculateStringHash(m_Hash_sum,  m_hash_algorithm);
+
+    }
+    // если наша директория не директория, а файл (шпион типа)
+    else
+    {
+        m_is_dir = false;
+        m_size = info.size();
+        m_Hash_sum = m_hash.calculateStringHash(m_hash.calculateFileCheckSum(dir_path,  m_hash_algorithm), m_hash_algorithm);
+    }
 }
 
 void Snapshot::writeToFile(QString adress)
 {
-    qDebug() << adress.size();
     if(adress.size()==0) adress = "./"+ m_name;// если значения по умолчанию, записываем в текущую директорию
     adress += ".json";
     // открыли файл
@@ -34,10 +45,11 @@ void Snapshot::writeToFile(QString adress)
     tmp.insert("hash_sum",  m_Hash_sum);
     tmp.insert("last_changed_date", m_last_change_date);
     tmp.insert("size", m_size);
-    tmp.insert("inner_files", m_inner_files);
+    // если наша директория не директория, а файл (шпион типа)
+    if (m_is_dir) tmp.insert("inner_files", m_inner_files);
     //выкидываем в документ
     fileJson.write(QJsonDocument(tmp).toJson());
-    // qDebug() << "file writed!" << QFileInfo{fileJson}.absolutePath() << m_size;
+    qDebug() << "file writed!" << QFileInfo{fileJson}.absolutePath() << m_size;
     fileJson.close();
 }
 
