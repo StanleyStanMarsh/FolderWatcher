@@ -32,12 +32,12 @@ Snapshot::Snapshot(QString dir_path, ALG_ID hash_algorithm)
     }
 }
 
-void Snapshot::writeToFile(QString adress)
+void Snapshot::writeToFile(QString address)
 {
-    if(adress.size()==0) adress = "./"+ m_name;// если значения по умолчанию, записываем в текущую директорию
-    adress += ".json";
+    if(address.size()==0) address = "./"+ m_name;// если значения по умолчанию, записываем в текущую директорию
+    address += ".json";
     // открыли файл
-    QFile fileJson(adress);
+    QFile fileJson(address);
     fileJson.open(QIODevice::WriteOnly); // если файла нет, создаем
     //создаем QJsonObject, в который пишем информацию как в обычный словарь
     QJsonObject tmp;
