@@ -383,11 +383,8 @@ void MainWindow::chooseMD5() {
 
 void MainWindow::on_show_log_2_triggered()
 {
-    // NOTE: открываем файл с логами (не факт что работает, так и не смог протестить)
-    // QDesktopServices::openUrl(QUrl::fromLocalFile("log.txt"));
     QProcess proc;
     proc.startDetached("notepad.exe", QStringList{"log.txt"});
-    // proc.start("notepad.exe", {"log.txt"});
 }
 
 void MainWindow::on_actionSaveSnap_triggered()

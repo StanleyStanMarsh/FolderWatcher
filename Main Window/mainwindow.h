@@ -145,7 +145,10 @@ private slots:
     void handleHashSumCalculations(const HashSumRow &vec_rows, const QString &elapsed_time);
 
     /**
-     * @brief handleSnapshotCalculations
+     * Слот для принятия результатов формирования снапшотов
+     *
+     * @param file_name Имя файла
+     * @param current_time Время создания снапшота
      */
     void handleSnapshotCalculations(const QString file_name, const QDateTime current_time);
 
@@ -169,7 +172,6 @@ private slots:
      */
     [[maybe_unused]] void showHashSumLogs();
 
-    // FIXME: функция не работает как и сам объект
     /**
      * Слот для открытия файла логов
      */
@@ -188,7 +190,8 @@ signals:
                        const ALG_ID &hashAlgorithm);
 
     /**
-     * @brief returnSnapshot
+     * Сигнал, который отправляет инфу о директории при нажатии пункта меню "Сохранить снапшот"
+     *
      * @param dir_path
      * @param hash_algorithm
      */

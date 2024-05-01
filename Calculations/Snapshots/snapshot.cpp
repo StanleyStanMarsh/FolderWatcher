@@ -1,11 +1,6 @@
 #include "snapshot.h"
 
 
-Snapshot::Snapshot()
-{
-
-}
-
 void Snapshot::calculate(const QString dir_path, const QString file_name,
                          const ALG_ID hash_algorithm, const QDateTime current_time)
 {

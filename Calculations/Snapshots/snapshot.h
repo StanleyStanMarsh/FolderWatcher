@@ -35,8 +35,8 @@ class Snapshot : public QObject
 {
     Q_OBJECT
     QWidget *parent;
-    /// ------------- Члены класса, хранящие информацию о директории -------------
-    ///
+    // ------------- Члены класса, хранящие информацию о директории -------------
+    //
     /// Дата последнего изменения
     QString m_last_change_date;
     /// Список внутренних файлов директории
@@ -47,8 +47,8 @@ class Snapshot : public QObject
     int m_size;
     /// Имя директории
     QString m_name;
-    ///  ------------- Служебные члены класса -------------
-    ///
+    // ------------- Служебные члены класса -------------
+    //
     /// Флаг, показывающий является снапшот директорией или нет.
     bool m_is_dir;
     /// Класс HashSum, используется для доступа к функциям, подсчета контрольных сумм файлов
@@ -74,6 +74,7 @@ class Snapshot : public QObject
      * @return Снапшот внутреннего файла/папки в виде QJsonObject.
      */
     QJsonObject createSnapshotFile (QString file_path ,QJsonArray inner_files, int& counter, QString& hashsum);
+
     /**
      * @brief Функция ля сбора снапшотов всех внутренних файлов/папок в список внутренних файлов директории
      * @param folder_path --- путь до директории, для которой формируем список внутренних файлов/папок
@@ -89,19 +90,6 @@ class Snapshot : public QObject
      */
     QVariantList collectInnerFilesInDir(QString folder_path, QVariantList& inner_files, QJsonArray& result, int& counter,
                                         QString hashString);
-public:
-    /**
-     * @brief Конструктор класса Snapshot. Заполняет поля класса информацией о директории
-     * @details Конструктор считывает информацию о директории из QFileInfo, и заполняет список внутренних файлов, размер директории и
-     *          контрольную сумму директории с помощью функции collectInnerFilesInDir. В случае, если перед нами файл, а не директория,
-     *          список внутренних файлов остается пустым, размер и кс заполняются как для обычного файла
-     * @param dir_path --- путь до директории, для которой создается снапшот
-     * @param hash_algorithm --- алгоритм подсчета контрольной суммы
-     */
-    Snapshot();
-
-    /// NOTE переписать доки
-
 
     /**
      * @brief Функция сохраняющая информацию о директории/файле в файл формата JSON
@@ -119,16 +107,30 @@ public:
      */
     void writeToFile(QString address = "");
 
+public:
+    Snapshot() {}
+
 public slots:
     /**
-     * @brief calculate
-     * @param dir_path
-     * @param hash_algorithm
+     * @brief calculate слот, заполняющий поля класса информацией о директории
+     * Слот считывает информацию о директории из QFileInfo, и заполняет список внутренних файлов, размер директории и
+     * контрольную сумму директории с помощью функции collectInnerFilesInDir. В случае, если перед нами файл, а не директория,
+     * список внутренних файлов остается пустым, размер и кс заполняются как для обычного файла. Затем он записывает информацию в файл
+     * методом writeToFile и испускает сигнал snapshotReady о готовности снапшота
+     * @param dir_path Путь до директории, для которой создается снапшот
+     * @param file_name Имя файла снапшота
+     * @param hash_algorithm Алгоритм подсчета контрольной суммы
+     * @param current_time Время создания снапшота
      */
     void calculate(const QString dir_path, const QString file_name,
                    const ALG_ID hash_algorithm, const QDateTime current_time);
 
 signals:
+    /**
+     * @brief snapshotReady сигнал о завершении формирования снапшота
+     * @param file_name Имя файла снапшота
+     * @param current_time Время создания снапшота
+     */
     void snapshotReady(const QString file_name, const QDateTime current_time);
 };
 
