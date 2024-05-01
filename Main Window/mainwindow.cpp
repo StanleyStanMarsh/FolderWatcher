@@ -88,22 +88,28 @@ MainWindow::MainWindow(QWidget *parent)
     // Коннектим изменение корневого пути в модели с его отображением в строке
     connect(dir, &QFileSystemModel::rootPathChanged, ui->path_line, &QLineEdit::setText);
 
-    // Настройка работы с БД
+    // Задаем БД
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("./testDB.db");
-    if (db.open()) qDebug("opened");
-    else qDebug("not opened");
+    // Проверяем успешность открытия БД
+    if (db.open()) qDebug("DB opened");
+    else qDebug("DB open error!!");
 
+    // Если в БД нет таблицы с инфой о снапшотах, то создаем её
     query = new QSqlQuery(db);
     //query->exec("DROP TABLE IF EXISTS Snaps;");
     query->exec("CREATE TABLE IF NOT EXISTS Snaps(DirectoryPath TEXT, SnapshotPath TEXT, SaveDate DATE);");
 
+    // Задаем Qt модель для работы
     SQLmodel = new QSqlTableModel(this, db);
     SQLmodel->setTable("Snaps");
     SQLmodel->select();
     SQLmodel->submitAll();
     SQLmodel->setEditStrategy(QSqlTableModel::OnManualSubmit);
     //ui->tableView->setModel(SQLmodel);
+
+    // Создаем директорию под снапшоты
+    createDirectory("./snapshots");
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
@@ -364,7 +370,8 @@ void MainWindow::on_show_log_2_triggered()
 void MainWindow::on_actionSaveSnap_triggered() const
 {
     // имя файла - текущее время
-    QString fileName = QDateTime::currentDateTime().toString("hhmmsszzzddMMyyyy");
+    QDateTime currentTime = QDateTime::currentDateTime();
+    QString fileName = currentTime.toString("hhmmsszzzddMMyyyy");
 
     // создаем снапшот
     Snapshot snap(dir->rootPath(), CALG_SHA_256);
@@ -374,9 +381,25 @@ void MainWindow::on_actionSaveSnap_triggered() const
     QSqlRecord record = SQLmodel->record();
     record.setValue("DirectoryPath", dir->rootPath());
     record.setValue("SnapshotPath", QDir::currentPath() + "/snapshots/" + fileName + ".json");
-    record.setValue("SaveDate", QDateTime::currentDateTime());
+    record.setValue("SaveDate", currentTime);
 
     SQLmodel->setFilter("");
     SQLmodel->insertRecord(SQLmodel->rowCount(), record);
     SQLmodel->submitAll();
+}
+
+bool MainWindow::createDirectory(const QString &path) {
+    QDir dir;
+    if (dir.exists(path)) {
+        qDebug() << "Directory already exists:" << path;
+        return true;
+    } else {
+        if (dir.mkpath(path)) {
+            qDebug() << "Directory created:" << path;
+            return true;
+        } else {
+            qDebug() << "Failed to create directory:" << path;
+            return false;
+        }
+    }
 }

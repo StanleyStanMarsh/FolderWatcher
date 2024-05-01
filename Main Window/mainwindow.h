@@ -208,6 +208,14 @@ private:
      */
     QString getMinimizedFormSize(double &f_size);
 
+    /**
+     * Функция для создания директории под снапшоты
+     *
+     * @param path - путь до нужной директории
+     * @return true - директория уже была/создана, false - не удалось создать директорию
+     */
+    bool createDirectory(const QString &path);
+
     /// Графическая форма окна
     Ui::MainWindow *ui;
 
