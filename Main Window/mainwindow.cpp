@@ -106,7 +106,7 @@ MainWindow::MainWindow(QWidget *parent)
     SQLmodel->select();
     SQLmodel->submitAll();
     SQLmodel->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    //ui->tableView->setModel(SQLmodel);
+    // ui->tableView->setModel(SQLmodel);
 
     // Создаем директорию под снапшоты
     createDirectory("./snapshots");

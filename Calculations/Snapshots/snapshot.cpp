@@ -49,7 +49,7 @@ void Snapshot::writeToFile(QString address)
     if (m_is_dir) tmp.insert("inner_files", m_inner_files);
     //выкидываем в документ
     fileJson.write(QJsonDocument(tmp).toJson());
-    qDebug() << "file writed!" << QFileInfo{fileJson}.absolutePath() << m_size;
+    qDebug() << "file has been written" << QFileInfo{fileJson}.absolutePath() << m_size;
     fileJson.close();
 }
 
