@@ -27,6 +27,7 @@
 #include <QSqlQuery>
 #include <QSqlTableModel>
 #include <QSqlRecord>
+#include <QProcess>
 
 #include "../Calculations/Hash Sum/HashSum.h"
 #include "../Loading Window/LoadingWindow.h"
@@ -89,7 +90,7 @@ private slots:
     /**
      * Слот для сохранения снапшота из меню
      */
-    void on_actionSaveSnap_triggered() const;
+    void on_actionSaveSnap_triggered();
 
     /**
      * Слот для перехода в корень выбранного локального хранилища
@@ -144,6 +145,11 @@ private slots:
     void handleHashSumCalculations(const HashSumRow &vec_rows, const QString &elapsed_time);
 
     /**
+     * @brief handleSnapshotCalculations
+     */
+    void handleSnapshotCalculations(const QString file_name, const QDateTime current_time);
+
+    /**
      * Слот для перехвата ошибок при вычислении контрольных сумм
      *
      * @param error Возникающие ошибки
@@ -180,6 +186,14 @@ signals:
      */
     void returnHashSum(const QModelIndexList& selected_files, const QFileSystemModel *dir_info,
                        const ALG_ID &hashAlgorithm);
+
+    /**
+     * @brief returnSnapshot
+     * @param dir_path
+     * @param hash_algorithm
+     */
+    void returnSnapshot(const QString dir_path, const QString fil_name,
+                        const ALG_ID hash_algorithm, const QDateTime current_time);
 
     void errorOccured(const std::exception &e, const QString &file_path);
 
@@ -230,11 +244,17 @@ private:
     /// Отдельный поток для ведения логов
     QThread logger_thread;
 
+    /// Отдельный поток для снапшотов
+    QThread snapshot_thread;
+
     /// Окно загрузки
     LoadingWindow *loading_window;
 
     /// Фильтр событий отключающий горячие клавиши
     ShortcutsEventFilter *filter;
+
+    /// Снапшоты директорий
+    Snapshot *snap;
 
     /// Лог для сбора ошибок при подсчете КС
     QString hash_sum_log;

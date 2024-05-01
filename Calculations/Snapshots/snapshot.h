@@ -58,7 +58,8 @@ class Snapshot : public QObject
     QStack<int> m_calls;
     ///Алгоритм хэширования, исполбзующийся для подсчета контрольных сумм
     ALG_ID m_hash_algorithm;
-    // NOTE: надо прикрутить эти функции к action в дизайнере в Инструменты->Сохранить снапшот директории
+    /// Путь до файла
+    QString m_dir_path;
     /**
      * @brief Функция для формирования снапшота внутреннего файла/папки. Используется только для формирования
      *         списка внутренних файлов директории.
@@ -97,7 +98,11 @@ public:
      * @param dir_path --- путь до директории, для которой создается снапшот
      * @param hash_algorithm --- алгоритм подсчета контрольной суммы
      */
-    Snapshot(QString dir_path, ALG_ID hash_algorithm);
+    Snapshot();
+
+    /// NOTE переписать доки
+
+
     /**
      * @brief Функция сохраняющая информацию о директории/файле в файл формата JSON
      * @details Функция создает JSON файл, куда сохраняет информацию, содержащуюся в полях класса путем создания словаря в QJsonobject.
@@ -113,6 +118,18 @@ public:
      *          "inner_files" --- список снапшотов внутренних файлов директории/подпапки
      */
     void writeToFile(QString address = "");
+
+public slots:
+    /**
+     * @brief calculate
+     * @param dir_path
+     * @param hash_algorithm
+     */
+    void calculate(const QString dir_path, const QString file_name,
+                   const ALG_ID hash_algorithm, const QDateTime current_time);
+
+signals:
+    void snapshotReady(const QString file_name, const QDateTime current_time);
 };
 
 #endif // SNAPSHOT_H

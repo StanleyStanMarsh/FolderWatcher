@@ -1,11 +1,19 @@
 #include "snapshot.h"
 
 
-Snapshot::Snapshot(QString dir_path, ALG_ID hash_algorithm)
+Snapshot::Snapshot()
 {
-    dir_path.replace("/","\\\\"); // адаптируем путь до диреткории
-    QFileInfo info(dir_path);
-    m_size =0;
+
+}
+
+void Snapshot::calculate(const QString dir_path, const QString file_name,
+                         const ALG_ID hash_algorithm, const QDateTime current_time)
+{
+    QString new_dir_path(dir_path);
+    new_dir_path.replace("/","\\\\"); // адаптируем путь до диреткории
+    m_dir_path = new_dir_path;
+    QFileInfo info(m_dir_path);
+    m_size = 0;
     m_name = info.fileName();
     m_last_change_date = info.lastModified().toString("hh:mm:ss.zzz dd.MM.yyyy");
     m_hash_algorithm = hash_algorithm;
@@ -18,7 +26,7 @@ Snapshot::Snapshot(QString dir_path, ALG_ID hash_algorithm)
     if(info.isDir())
     {
         m_is_dir = true;
-        collectInnerFilesInDir(dir_path, inner_files, result, counter, hash_sum);
+        collectInnerFilesInDir(m_dir_path, inner_files, result, counter, hash_sum);
         m_inner_files = result;
         m_Hash_sum = m_hash.calculateStringHash(m_Hash_sum,  m_hash_algorithm);
 
@@ -28,8 +36,11 @@ Snapshot::Snapshot(QString dir_path, ALG_ID hash_algorithm)
     {
         m_is_dir = false;
         m_size = info.size();
-        m_Hash_sum = m_hash.calculateStringHash(m_hash.calculateFileCheckSum(dir_path,  m_hash_algorithm), m_hash_algorithm);
+        m_Hash_sum = m_hash.calculateStringHash(m_hash.calculateFileCheckSum(m_dir_path,  m_hash_algorithm), m_hash_algorithm);
     }
+
+    this->writeToFile("./snapshots/" + file_name);
+    emit snapshotReady(file_name, current_time);
 }
 
 void Snapshot::writeToFile(QString address)
