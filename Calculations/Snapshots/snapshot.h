@@ -132,6 +132,8 @@ signals:
      * @param current_time Время создания снапшота
      */
     void snapshotReady(const QString file_name, const QDateTime current_time);
+
+    void errorOccured(const std::exception &e, const QString &file_path);
 };
 
 #endif // SNAPSHOT_H

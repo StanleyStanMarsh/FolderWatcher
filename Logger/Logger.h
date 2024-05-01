@@ -16,7 +16,7 @@ public:
 
 public slots:
     static void logHashSumToFile(const HashSumErrors &error, const QString &file_path);
-    static void logSizeToFile(const std::exception &e, const QString &file_path);
+    static void logExceptionToFile(const std::exception &e, const QString &file_path);
 
 };
 

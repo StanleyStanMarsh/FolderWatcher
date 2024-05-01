@@ -70,10 +70,10 @@ MainWindow::MainWindow(QWidget *parent)
     //----------------------Logger-----------------------------------------
     // Коннектим завершение потока с планированием удаления логгера
     connect(&logger_thread, &QThread::finished, logger, &QObject::deleteLater);
-    // Коннектим сигнал о возникшей ошибке с логом
+    // Коннектим сигналы о возникших ошибках с логом
     connect(calculator, &HashSum::errorOccured, logger, &Logger::logHashSumToFile);
-    // Коннектим сигнал о возникшей ошибке с логом
-    connect(this, &MainWindow::errorOccured, logger, &Logger::logSizeToFile);
+    connect(this, &MainWindow::errorOccured, logger, &Logger::logExceptionToFile);
+    connect(snap, &Snapshot::errorOccured, logger, &Logger::logExceptionToFile);
 
     //----------------------Snapshot-----------------------------------------
     // Коннектим завершение потока с планированием удаления снапшота

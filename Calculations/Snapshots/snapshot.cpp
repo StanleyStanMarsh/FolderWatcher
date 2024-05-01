@@ -95,44 +95,51 @@ QVariantList Snapshot::collectInnerFilesInDir(QString folder_path, QVariantList&
     {
         if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) //если это не подпапка
         {
-
-            m_calls.push(1); // кладем в стек вызово 1, так как сейчас работаем с файлом
-            QString file_path = folder_path + QString("\\").append(QString::fromWCharArray(findFileData.cFileName)); //cобираем путь до файла
-            QString file_check_sum = m_hash.calculateFileCheckSum(file_path, m_hash_algorithm); // вычисляем кс файла
-            hashString += file_check_sum; // сохраняем кс для текущей внутренней папки
-            m_Hash_sum += hashString; // сохраняем кс для глобальной директории
-            counter += QFileInfo {file_path}.size(); // сохраняем размер для текущей внутренней папки
-            m_size += QFileInfo {file_path}.size(); // сохраняем размер для глобальной директории
-            QJsonObject file_snapshot = createSnapshotFile(file_path ,QJsonArray::fromVariantList(inner_files), counter, hashString); //получаем JSON object файла
-            inner_files.append(file_snapshot); // закидываем снапшот файла в список внутренних файлов для текущей папки
-            m_calls.pop(); // файл обработан, выкидываем его из стека вызовов.
+            try {
+                m_calls.push(1); // кладем в стек вызово 1, так как сейчас работаем с файлом
+                QString file_path = folder_path + QString("\\").append(QString::fromWCharArray(findFileData.cFileName)); //cобираем путь до файла
+                QString file_check_sum = m_hash.calculateFileCheckSum(file_path, m_hash_algorithm); // вычисляем кс файла
+                hashString += file_check_sum; // сохраняем кс для текущей внутренней папки
+                m_Hash_sum += hashString; // сохраняем кс для глобальной директории
+                counter += QFileInfo {file_path}.size(); // сохраняем размер для текущей внутренней папки
+                m_size += QFileInfo {file_path}.size(); // сохраняем размер для глобальной директории
+                QJsonObject file_snapshot = createSnapshotFile(file_path ,QJsonArray::fromVariantList(inner_files), counter, hashString); //получаем JSON object файла
+                inner_files.append(file_snapshot); // закидываем снапшот файла в список внутренних файлов для текущей папки
+                m_calls.pop(); // файл обработан, выкидываем его из стека вызовов.
+            } catch (std::exception &e) {
+                emit errorOccured(e, folder_path);
+            }
         }
         else if (QString::fromWCharArray(findFileData.cFileName) != QString::fromWCharArray(L".")
                  && QString::fromWCharArray(findFileData.cFileName) != QString::fromWCharArray(L"..")) //если найдена подпапка, не являющаяся исходной или родительской
         {
-            if (m_calls.empty()) // если стек вызовов пуст, значит мы закончили сбор внутренних файлов для внутреннего файл, можно закидывать в результат
-            {
-                for (int i=0; i<inner_files.size(); i++)
+            try {
+                if (m_calls.empty()) // если стек вызовов пуст, значит мы закончили сбор внутренних файлов для внутреннего файл, можно закидывать в результат
                 {
-                    result.append(QJsonArray::fromVariantList(inner_files).at(i));
+                    for (int i=0; i<inner_files.size(); i++)
+                    {
+                        result.append(QJsonArray::fromVariantList(inner_files).at(i));
+                    }
+                    inner_files.clear();
+                    counter = 0;
+                    hashString.clear();
                 }
-                inner_files.clear();
-                counter = 0;
-                hashString.clear();
+                m_calls.push(2); // кладем 2, тк работаем с папкой
+                QVariantList array; // создали пустой массив для сбора внутренних файлов внутренней папки
+                QString sub_folder_path = folder_path + QString("\\\\") + QString::fromWCharArray(findFileData.cFileName); //путь к подпапке
+                QJsonObject dir_snapshot = createSnapshotFile(sub_folder_path, QJsonArray::fromVariantList(collectInnerFilesInDir(sub_folder_path, array, result, counter
+                                                                                                                                  , hashString)), counter, hashString);
+                //получили снапшот внутренней папки, закидываем его в список внутренних файлов
+                inner_files.append(dir_snapshot);
+                m_calls.pop(); // папка обработана, выкидываем ее из стека вызовов.
+                if (m_calls.empty()) // если все папки обработаны, вписываем все в резульат
+                {
+                    result.append(dir_snapshot);
+                    inner_files.clear();
+                 }
+            } catch (std::exception &e) {
+                emit errorOccured(e, folder_path);
             }
-            m_calls.push(2); // кладем 2, тк работаем с папкой
-            QVariantList array; // создали пустой массив для сбора внутренних файлов внутренней папки
-            QString sub_folder_path = folder_path + QString("\\\\") + QString::fromWCharArray(findFileData.cFileName); //путь к подпапке
-            QJsonObject dir_snapshot = createSnapshotFile(sub_folder_path, QJsonArray::fromVariantList(collectInnerFilesInDir(sub_folder_path, array, result, counter
-                                                                                                                              , hashString)), counter, hashString);
-            //получили снапшот внутренней папки, закидываем его в список внутренних файлов
-            inner_files.append(dir_snapshot);
-            m_calls.pop(); // папка обработана, выкидываем ее из стека вызовов.
-            if (m_calls.empty()) // если все папки обработаны, вписываем все в резульат
-            {
-                result.append(dir_snapshot);
-                inner_files.clear();
-             }
         }
     } while (FindNextFile(hFind, &findFileData)); //обход по всем подпапкам/файлам папки
 
