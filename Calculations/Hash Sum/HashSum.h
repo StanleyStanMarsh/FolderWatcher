@@ -12,8 +12,8 @@
 #include <QFileSystemModel>
 #include <QPair>
 
-#pragma comment(lib, "Advapi32.lib")
-#pragma comment(lib, "Crypt32.lib")
+// #pragma comment(lib, "Advapi32.lib")
+// #pragma comment(lib, "Crypt32.lib")
 
 /// Переименовываем вектор пар <имя, хеш-сумма>
 using HashSumRow = QVector<QPair<QString, QString>>;

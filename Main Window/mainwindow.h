@@ -34,6 +34,7 @@
 #include "ShortcutsEventFilter.h"
 #include "../Logger/Logger.h"
 #include "../Calculations/Snapshots/snapshot.h"
+#include "../Compare Window/CompareWindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -177,6 +178,8 @@ private slots:
      */
     void on_show_log_2_triggered();
 
+    void on_action_load_snap_triggered();
+
 signals:
 
     /**
@@ -249,6 +252,9 @@ private:
 
     /// Отдельный поток для снапшотов
     QThread snapshot_thread;
+
+    /// Окно сравнения снапшотов
+    CompareWindow *compare_window;
 
     /// Окно загрузки
     LoadingWindow *loading_window;

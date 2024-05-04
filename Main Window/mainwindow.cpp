@@ -5,8 +5,11 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    //--------------------настройка модели работы с директориями----------------
     ui->setupUi(this);
+
+    this->setWindowTitle("Folder Watcher");
+
+    // -------------------- Настройка модели работы с директориями ----------------
     dir = new QFileSystemModel;
 
     dir->setRootPath(QDir::currentPath());
@@ -18,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->path_line->setText(QDir::currentPath());
 
-    //-----------------настройка модели работы с инфой о директориях--------------
+    // --------------- Настройка отображения с инфой о директориях -------------
     info = new QStandardItemModel;
     ui->tableView->resizeColumnsToContents();
     QHeaderView *header = ui->tableView->horizontalHeader();
@@ -28,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableView->setModel(info);
 
+    // ----------------------- Хранилища ---------------------------
     // Ищем доступные локальные хранилища и добавляем их в комбо бокс
     QStringList storages_paths;
     foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
@@ -49,6 +53,11 @@ MainWindow::MainWindow(QWidget *parent)
     Snapshot *snap = new Snapshot();
     snap->moveToThread(&snapshot_thread);
 
+    // Окно сравнения
+    compare_window = new CompareWindow();
+    // compare_window->moveToThread(&compare_window_thread);
+    compare_window->hide();
+
     // Создаем окно загрузки и скрываем его
     loading_window = new LoadingWindow();
     loading_window->hide();
@@ -59,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionSHA_512, &QAction::triggered, this, &MainWindow::chooseSHA_512);
     connect(ui->actionMD5, &QAction::triggered, this, &MainWindow::chooseMD5);
 
-    //----------------------HashSum-----------------------------------------
+    // ---------------------- HashSum -----------------------------------------
     // Коннектим завершение потока с планированием удаления "вычислителя" КС
     connect(&hash_sum_thread, &QThread::finished, calculator, &QObject::deleteLater);
     // Коннектим сигнал с данными о выделенных файлах и папках со слотом вычисления КС
@@ -67,7 +76,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Коннектим сигнал о завершении вычисления КС с внесением полученных данных в таблицу
     connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::handleHashSumCalculations);
 
-    //----------------------Logger-----------------------------------------
+    // ---------------------- Logger -----------------------------------------
     // Коннектим завершение потока с планированием удаления логгера
     connect(&logger_thread, &QThread::finished, logger, &QObject::deleteLater);
     // Коннектим сигналы о возникших ошибках с логом
@@ -75,13 +84,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::errorOccured, logger, &Logger::logExceptionToFile);
     connect(snap, &Snapshot::errorOccured, logger, &Logger::logExceptionToFile);
 
-    //----------------------Snapshot-----------------------------------------
+    // ---------------------- Snapshot -----------------------------------------
     // Коннектим завершение потока с планированием удаления снапшота
     connect(&snapshot_thread, &QThread::finished, snap, &QObject::deleteLater);
     // Коннектим сигнал с данными о выделенных файлах и папках со слотом вычисления КС
     connect(this, &MainWindow::returnSnapshot, snap, &Snapshot::calculate);
     // Коннектим сигнал о завершении вычисления КС с внесением полученных данных в таблицу
     connect(snap, &Snapshot::snapshotReady, this, &MainWindow::handleSnapshotCalculations);
+
+    // -------------------- Compare Window --------------------------------------
+    // Коннектим закрытие окна сравнения с открытием главного окна
+    connect(compare_window, &CompareWindow::closed, this, &MainWindow::show);
 
     // // Коннектим сигнал о завершении вычисления КС с показом логов
     // connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::showHashSumLogs);
@@ -94,7 +107,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     snapshot_thread.start();
 
-    //-------------------Кнопки, вьюшки и тд.-------------------------------------
+    // compare_window_thread.start();
+
+    // ------------------- Кнопки, вьюшки и тд. -------------------------------------
     // Коннектим двойное нажатие по папке/файлу к его открытию
     connect(ui->listView, &QListView::doubleClicked, this, &MainWindow::goDownDir);
     // Коннектим нажатие по кнопке с поднятием на одну папку наверх
@@ -106,7 +121,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Коннектим изменение корневого пути в модели с его отображением в строке
     connect(dir, &QFileSystemModel::rootPathChanged, ui->path_line, &QLineEdit::setText);
 
-    // Задаем БД
+    // --------------------------- Настройка БД ------------------------------------
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("./testDB.db");
     // Проверяем успешность открытия БД
@@ -236,6 +251,7 @@ MainWindow::~MainWindow()
     logger_thread.wait();
     snapshot_thread.quit();
     snapshot_thread.wait();
+    delete compare_window;
 }
 
 void MainWindow::on_info_message_triggered() const
@@ -426,3 +442,10 @@ void MainWindow::handleSnapshotCalculations(const QString file_name, const QDate
     SQLmodel->submitAll();
     loading_window->hide();
 }
+
+void MainWindow::on_action_load_snap_triggered()
+{
+    compare_window->show();
+    this->close();
+}
+

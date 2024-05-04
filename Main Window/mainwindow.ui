@@ -129,7 +129,7 @@
      <addaction name="actionSHA_512"/>
      <addaction name="actionMD5"/>
     </widget>
-    <addaction name="action_2"/>
+    <addaction name="action_load_snap"/>
     <addaction name="actionSaveSnap"/>
     <addaction name="menu"/>
    </widget>
@@ -147,7 +147,7 @@
    <addaction name="about"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action_2">
+  <action name="action_load_snap">
    <property name="text">
     <string>Загрузить снапшот директории</string>
    </property>

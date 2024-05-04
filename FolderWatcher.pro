@@ -5,7 +5,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QMAKE_TARGET_COMPANY = DIPMaxMax
 QMAKE_TARGET_PRODUCT = FolderWatcher
 QMAKE_TARGET_COPYRIGHT = DIPMaxMax Proj.
-VERSION = 0.9
+VERSION = 0.9.5
 
 CONFIG += c++20
 
@@ -19,6 +19,7 @@ SOURCES += \
     'Loading Window/LoadingWindow.cpp' \
     'Main Window/ShortcutsEventFilter.cpp' \
     Calculations/Snapshots/snapshot.cpp \
+    'Compare Window/CompareWindow.cpp' \
     Logger/Logger.cpp \
     main.cpp
 
@@ -28,10 +29,12 @@ HEADERS += \
     'Loading Window/LoadingWindow.h' \
     'Main Window/ShortcutsEventFilter.h' \
     Calculations/Snapshots/snapshot.h \
+    'Compare Window/CompareWindow.h' \
     Logger/Logger.h
 
 FORMS += \
-    'Main Window/mainwindow.ui'
+    'Main Window/mainwindow.ui' \
+    'Compare Window/CompareWindow.ui'
 
 CONFIG += lrelease
 CONFIG += embed_translations
