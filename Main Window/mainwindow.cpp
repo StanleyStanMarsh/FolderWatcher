@@ -107,8 +107,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     snapshot_thread.start();
 
-    // compare_window_thread.start();
-
     // ------------------- Кнопки, вьюшки и тд. -------------------------------------
     // Коннектим двойное нажатие по папке/файлу к его открытию
     connect(ui->listView, &QListView::doubleClicked, this, &MainWindow::goDownDir);
@@ -445,6 +443,8 @@ void MainWindow::handleSnapshotCalculations(const QString file_name, const QDate
 
 void MainWindow::on_action_load_snap_triggered()
 {
+    // передаем в окно сравнения путь нужной директории
+    compare_window->catchDirPath(dir->rootPath());
     compare_window->show();
     this->close();
 }
