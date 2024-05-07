@@ -14,16 +14,24 @@ CompareWindow::CompareWindow(QSqlTableModel *SQLmodel, QWidget *parent)
     this->SQLmodel = SQLmodel;
 
     // Добавляем список директорий со снапшотами из БД в comboBox
-    updateDirectoriesList();
+    // (не нужно, список обновляется при открытии окна)
+    //updateDirectoriesList();
+
+    //ui->left_table_view->setModel(SQLmodel);
 
     // Устанавливаем индекс -1, чтобы знать, что мы ещё ничего не выбирали
     ui->dir_box->setCurrentIndex(-1);
 
     // Коннектим выбор директории в комбо боксе с изменением доступных снапшотов
     connect(ui->dir_box, &QComboBox::textActivated, this, &CompareWindow::updateSnapshotsList);
+
+    // Коннектим выбор снапшотов в комбо боксе с их сравнением
+    connect(ui->left_snaphots_box, &QComboBox::textActivated, this, &CompareWindow::compareSnapshots);
+    connect(ui->right_snapshots_box, &QComboBox::textActivated, this, &CompareWindow::compareSnapshots);
 }
 
 void CompareWindow::closeEvent(QCloseEvent *event) {
+    SQLmodel->setFilter("");
     emit closed();
     event->accept();
 }
@@ -87,4 +95,12 @@ void CompareWindow::updateSnapshotsList(){
     // устанавливаем значения в comboBox
     ui->left_snaphots_box->addItems(snapshots_list);
     ui->right_snapshots_box->addItems(snapshots_list);
+}
+
+void CompareWindow::compareSnapshots(){
+    // Если хотя бы один из снапшотов ещё не выбрана, то ничего не делаем
+    if (ui->left_snaphots_box->currentIndex() == -1) return;
+    if (ui->right_snapshots_box->currentIndex() == -1) return;
+
+    qDebug() << "\ncompare start";
 }

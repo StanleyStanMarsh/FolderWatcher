@@ -443,7 +443,10 @@ void MainWindow::handleSnapshotCalculations(const QString file_name, const QDate
 void MainWindow::on_action_load_snap_triggered()
 {
     // передаем в окно сравнения путь нужной директории
-    compare_window->catchDirPath(dir->rootPath());
+    //compare_window->catchDirPath(dir->rootPath());
+
+    // обновляем список снапшотов
+    compare_window->updateDirectoriesList();
     compare_window->show();
     this->close();
 }

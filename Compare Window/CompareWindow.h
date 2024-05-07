@@ -44,6 +44,11 @@ public:
      */
     void updateSnapshotsList();
 
+    /**
+     * Слот для сравнения выбранных снапшотов
+     */
+    void compareSnapshots();
+
 signals:
     /**
      * Сигнал который испускается при закрытии окна
