@@ -18,6 +18,7 @@ CompareWindow::CompareWindow(QSqlTableModel *SQLmodel, QWidget *parent)
     //updateDirectoriesList();
 
     //ui->left_table_view->setModel(SQLmodel);
+    //ui->left_table_view->resizeColumnsToContents();
 
     // Устанавливаем индекс -1, чтобы знать, что мы ещё ничего не выбирали
     ui->dir_box->setCurrentIndex(-1);
@@ -71,12 +72,12 @@ void CompareWindow::updateDirectoriesList(){
 void CompareWindow::updateSnapshotsList(){
     // Ищем снапшоты для данной директории и добавляем их в comboBox
 
-    // Если директория ещё не выбрана, то ничего не делаем
-    if (ui->dir_box->currentIndex() == -1) return;
-
     // Удаляем старые варианты
     ui->left_snaphots_box->clear();
     ui->right_snapshots_box->clear();
+
+    // Если директория ещё не выбрана, то ничего не делаем
+    if (ui->dir_box->currentIndex() == -1) return;
 
     // Смотрим только снапшоты выбранной директории
     SQLmodel->setFilter(QString("DirectoryPath = '%1'").arg(ui->dir_box->currentText()));
