@@ -3,6 +3,11 @@
 
 #include <QWidget>
 #include <QCloseEvent>
+#include <QSqlTableModel>
+#include <QSqlRecord>
+#include <QStringList>
+#include <QSet>
+#include <QDateTime>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CompareWindow; }
@@ -12,7 +17,7 @@ class CompareWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CompareWindow(QWidget *parent = nullptr);
+    explicit CompareWindow(QSqlTableModel *SQLmodel, QWidget *parent = nullptr);
 
     /**
      * Функия для принятия пути до папки от главного окна, для которой будет производиться сравнение снапшотов
@@ -29,6 +34,16 @@ public:
      */
     void closeEvent(QCloseEvent *event) override;
 
+    /**
+     * Слот для обновления списка доступных директорий
+     */
+    void updateDirectoriesList();
+
+    /**
+     * Слот для обновления списка доступных снапшотов
+     */
+    void updateSnapshotsList();
+
 signals:
     /**
      * Сигнал который испускается при закрытии окна
@@ -42,6 +57,8 @@ private:
     /// Путь до папки
     QString dir_path;
 
+    // Объект модели БД
+    QSqlTableModel *SQLmodel;
 };
 
 #endif // COMPAREWINDOW_H

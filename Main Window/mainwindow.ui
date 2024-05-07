@@ -149,7 +149,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_load_snap">
    <property name="text">
-    <string>Сравнить снапшоты директорий</string>
+    <string>Сравнить снапшоты директории</string>
    </property>
   </action>
   <action name="actionSaveSnap">

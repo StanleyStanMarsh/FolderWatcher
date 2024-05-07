@@ -53,11 +53,6 @@ MainWindow::MainWindow(QWidget *parent)
     Snapshot *snap = new Snapshot();
     snap->moveToThread(&snapshot_thread);
 
-    // Окно сравнения
-    compare_window = new CompareWindow();
-    // compare_window->moveToThread(&compare_window_thread);
-    compare_window->hide();
-
     // Создаем окно загрузки и скрываем его
     loading_window = new LoadingWindow();
     loading_window->hide();
@@ -91,10 +86,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::returnSnapshot, snap, &Snapshot::calculate);
     // Коннектим сигнал о завершении вычисления КС с внесением полученных данных в таблицу
     connect(snap, &Snapshot::snapshotReady, this, &MainWindow::handleSnapshotCalculations);
-
-    // -------------------- Compare Window --------------------------------------
-    // Коннектим закрытие окна сравнения с открытием главного окна
-    connect(compare_window, &CompareWindow::closed, this, &MainWindow::show);
 
     // // Коннектим сигнал о завершении вычисления КС с показом логов
     // connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::showHashSumLogs);
@@ -141,6 +132,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Создаем директорию под снапшоты
     createDirectory("./snapshots");
+
+    // -------------------- Compare Window --------------------------------------
+    // Окно сравнения
+    compare_window = new CompareWindow(SQLmodel);
+    // compare_window->moveToThread(&compare_window_thread);
+    compare_window->hide();
+    // Коннектим закрытие окна сравнения с открытием главного окна
+    connect(compare_window, &CompareWindow::closed, this, &MainWindow::show);
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
