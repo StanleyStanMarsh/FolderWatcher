@@ -5,7 +5,7 @@ QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgo
 {
     WIN32_FIND_DATA findFileData; //информацция о найденных файлах
 
-    HANDLE hFind = FindFirstFile((folderPath + "\\*").toStdWString().c_str(), &findFileData); //дескриптор 1 найденного файла, * - найти любой файл
+    HANDLE hFind = FindFirstFile((folderPath + "/*").toStdWString().c_str(), &findFileData); //дескриптор 1 найденного файла, * - найти любой файл
 
     if (hFind == INVALID_HANDLE_VALUE)
     {
@@ -17,15 +17,16 @@ QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgo
 
         if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) //если это не подпапка
         {
-            QString filePath = folderPath + QString("\\").append(QString::fromWCharArray(findFileData.cFileName)); //cобираем путь до файла
+            QString filePath = folderPath + QString("/").append(QString::fromWCharArray(findFileData.cFileName)); //cобираем путь до файла
             QString fileCheckSum = calculateFileCheckSum(filePath, hashAlgorithm); //получаем кс файла
             hashString += fileCheckSum; //присоединяем к КС остльных файлов
 
         }
         else if (QString::fromWCharArray(findFileData.cFileName) != QString::fromWCharArray(L".")
                  && QString::fromWCharArray(findFileData.cFileName) != QString::fromWCharArray(L"..")) //если найдена подпапка, не являющаяся исходной или родительской
+
         {
-            QString subFolderPath = folderPath + QString("\\\\") + QString::fromWCharArray(findFileData.cFileName); //путь к подпапке
+            QString subFolderPath = folderPath + QString("/") + QString::fromWCharArray(findFileData.cFileName); //путь к подпапке
             collectAllCheckSumsInFolder(subFolderPath, hashAlgorithm, hashString); //рекурсивный вызов
         }
     } while (FindNextFile(hFind, &findFileData)); //обход по всем подпапкам/файлам папки
@@ -37,126 +38,83 @@ QString HashSum::collectAllCheckSumsInFolder(QString folderPath, ALG_ID hashAlgo
 
 QString HashSum::calculateFileCheckSum(QString filePath, const ALG_ID &hashAlgorithm)
 {
-    QString hashString;
+    QString hashString = ""; //будущая контрольная сумма
 
-    if (!filePath.isEmpty())
+    if (!filePath.isEmpty()) //если путь к файлу не пустой
     {
-        LPCWSTR filePathWin = reinterpret_cast<LPCWSTR>(filePath.utf16());
-        //преобразование QString к типу данных WinApi LPCWSTR - аналог const char*
+        QString fileContents; //считанные данные из текстового потока файла
 
-        HANDLE hFile = CreateFile(filePathWin, GENERIC_READ,
-                                  FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        //открытие файла для чтения через его дескриптор (handle) - cпец структуру Win API
+            QFile file(filePath); //открываем файл
 
-        if (hFile != INVALID_HANDLE_VALUE)
-        {
-            HCRYPTPROV hCryptProv; //переменная для хранения криптопровайдера
-            HCRYPTHASH hHash; //здесь хранится сам хэш
-
-
-            if (CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
-
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) //открываем для чтения
             {
-                if (CryptCreateHash(hCryptProv, hashAlgorithm, 0, 0, &hHash)) //создали хэш-объект
-                {
-                    BYTE buffer[4096];
-                    DWORD bytesRead; //double word - аналог unsigned int32
-
-                    DWORD hashLen = 64; //cколько займет хэш, зависит от алгоритма хэширования, SHA_256 генерирует 32байтный кэш
-
-
-                    while (ReadFile(hFile, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0)
-                    //чтение данных из файла в буфер + обновляем хэш итеративно
-                    {
-                        CryptHashData(hHash, buffer, bytesRead, 0);
-                    }
-                    BYTE hashBuffer[64]; //для MD5 - 16, SHA_256 - 32, SHA_512 - 64
-                    if (CryptGetHashParam(hHash, HP_HASHVAL, hashBuffer, &hashLen, 0)) //получаем cаму контрольную сумму
-                    {
-
-                        for (unsigned int i = 0; i < hashLen; i++)
-                        {
-                            hashString.append(QString::number(static_cast<int>(buffer[i]), 16).rightJustified(2, '0')); //hex
-                        }
-                    }
-                    else
-                    {
-                        // Ошибка Не удалось получить контрольную сумму файла.
-                        emit errorOccured(HashSumErrors::GetHashSumError, filePath);
-                    }
-
-                    CryptDestroyHash(hHash);//уничтожаем хэш-объект
-                }
-                else
-                {
-                    // Ошибка Не удалось создать хэш.
-                    emit errorOccured(HashSumErrors::CreateHashError, filePath);
-                }
-
-                CryptReleaseContext(hCryptProv, 0); //освобождаем дескриптор криптопровайдера
-            }
-            else
-            {
-                // Ошибка Не удалось получить доступ к криптопровайдеру.
-                emit errorOccured(HashSumErrors::ProviderAccessError, filePath);
+                QTextStream in(&file); //получаем текстовый поток файла
+                fileContents = in.readAll(); //и вписываем все в строку
+                file.close();
             }
 
-            CloseHandle(hFile); //уничтожаем дескриптор
-        }
-        else
-        {
-            // Ошибка Не удалось открыть файл для чтения.
-            emit errorOccured(HashSumErrors::OpenFileError, filePath);
-        }
+       hashString = calculateStringHash(fileContents, hashAlgorithm); //получаем контрольную сумму от длинной строки fileContents
     }
-
     return hashString;
 }
 
 QString HashSum::calculateStringHash(QString hashString, ALG_ID hashAlgorithm)
 {
+    // Переменные для хранения криптопровайдера и хэша
     HCRYPTPROV hCryptProv = NULL;
     HCRYPTHASH hHash = NULL;
 
+    // Пытаемся получить криптопровайдер
     if (!CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
-        return QString("");
-    }
-
-    if (!CryptCreateHash(hCryptProv, hashAlgorithm, 0, 0, &hHash)) {
-        CryptReleaseContext(hCryptProv, 0);
+        //Ошибка при получении криптопровайдера.;
         emit errorOccured(HashSumErrors::ProviderAccessError, "");
         return QString("");
     }
 
+    // Пытаемся создать хэш-объект
+    if (!CryptCreateHash(hCryptProv, hashAlgorithm, 0, 0, &hHash)) {
+        // Ошибка Не удалось создать хэш.
+        emit errorOccured(HashSumErrors::CreateHashError, "");
+        CryptReleaseContext(hCryptProv, 0);
+        return QString("");
+    }
+
+    // Пытаемся обновить хэш данными
     if (!CryptHashData(hHash, (BYTE*)hashString.toStdWString().c_str(), hashString.length(), 0)) {
+        //"Ошибка при обновлении хэша данными.";
         CryptDestroyHash(hHash);
         CryptReleaseContext(hCryptProv, 0);
         return QString("");
     }
 
-    // Получение размера хэша
+    // Получаем размер хэша
     DWORD cbHashSize;
     DWORD dwDataLen = sizeof(DWORD);
     if (!CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE*)&cbHashSize, &dwDataLen, 0)) {
+        //Ошибка при получении размера хэша;
+        emit errorOccured(HashSumErrors::GetHashSumError, "");
         CryptDestroyHash(hHash);
         CryptReleaseContext(hCryptProv, 0);
-        emit errorOccured(HashSumErrors::GetHashSumError, "");
         return QString("");
     }
 
-    // Получение самого хэш значения
+    // Получаем сам хэш
     QByteArray hashOutput(cbHashSize, 0);
     if (!CryptGetHashParam(hHash, HP_HASHVAL, reinterpret_cast<BYTE*>(hashOutput.data()), &cbHashSize, 0)) {
+        //Ошибка при получении хэша;
+        emit errorOccured(HashSumErrors::GetHashSumError, "");
         CryptDestroyHash(hHash);
         CryptReleaseContext(hCryptProv, 0);
-        emit errorOccured(HashSumErrors::GetHashSumError, "");
         return QString("");
     }
 
+    // Очищаем хэш-объект и освобождаем криптопровайдер
     CryptDestroyHash(hHash);
     CryptReleaseContext(hCryptProv, 0);
 
+    // Возвращаем хэш-строку
     return QString::fromLatin1(hashOutput.toHex());
+
 }
 
 void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSystemModel *dir_info,
@@ -184,13 +142,11 @@ void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSyst
             }
 
 
-            folder_path.replace('/', "\\\\");
+            //folder_path.replace('/', "\\\\");
             QString hash_string = this->collectAllCheckSumsInFolder(folder_path, hashAlgorithm, ""); //или CALG_SHA_512, CALG_MD5, ...
             if (hash_string == "")
             {
-                emit errorOccured(HashSumErrors::OpenFileError, folder_path);
-                // QMessageBox::warning(this, "Контрольная сумма", "Не удалось получить доступ к файлам папки"); //если нет разрешения на открытие файла или возникли ошибки
-                // return;
+                emit errorOccured(HashSumErrors::OpenFileError, folder_path); //если нет разрешения на открытие файла или возникли ошибки
 
             }
             QString folder_check_sum = this->calculateStringHash(hash_string, hashAlgorithm);
@@ -202,5 +158,6 @@ void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSyst
     }
     emit hashSumsReady(vec_rows, QString::number((double)timer.elapsed() / 1000., 'f', 3));
 }
+
 
 
