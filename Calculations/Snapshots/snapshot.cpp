@@ -265,3 +265,21 @@ QMap<QString, QString> Snapshot::createCompareMap (QJsonObject obj, QString& par
      }
     return result;
 }
+
+
+QList<QPair<QString, QString>> Snapshot::externalFiles(){
+    QList<QPair<QString, QString>> result;
+
+    for (int i=0; i< m_inner_files.size(); i++) {
+        QJsonValue value = m_inner_files.at(i);
+        QJsonObject object = value.toObject();
+        // Если это папка
+        if (object.contains("inner_files")){
+            result.append(QPair<QString, QString>(value["name"].toString(), "Folder"));
+        }
+        else {
+            result.append(QPair<QString, QString>(value["name"].toString(), "File"));
+        }
+    }
+    return result;
+}

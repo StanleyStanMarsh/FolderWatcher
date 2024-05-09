@@ -12,6 +12,7 @@
 #include <tuple>
 #include <QStack>
 #include <QFileSystemModel>
+
 #include "../Hash Sum/HashSum.h"
 
 /**
@@ -161,6 +162,10 @@ public:
     * @return Вектор измененных файлов
     */
    QVector<ComparisonAnswer> compareSnapshots(Snapshot& other);
+
+   // NOTE добавить описание
+   // Метод для получения внешних файлов в директории
+   QList<QPair<QString, QString>> externalFiles();
 
 public slots:
     /**

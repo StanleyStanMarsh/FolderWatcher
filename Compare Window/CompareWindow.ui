@@ -13,17 +13,13 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
-   <item>
-    <widget class="QComboBox" name="dir_box">
-     <property name="placeholderText">
-      <string>Выберите директорию</string>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0">
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
+     <widget class="QWidget" name="">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QComboBox" name="left_snaphots_box">
@@ -36,8 +32,8 @@
         <widget class="QTableView" name="left_table_view"/>
        </item>
       </layout>
-     </item>
-     <item>
+     </widget>
+     <widget class="QWidget" name="">
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
         <widget class="QComboBox" name="right_snapshots_box">
@@ -49,12 +45,16 @@
        <item>
         <widget class="QTextBrowser" name="comparison_output"/>
        </item>
-       <item>
-        <widget class="QTableView" name="right_table_view"/>
-       </item>
       </layout>
-     </item>
-    </layout>
+     </widget>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QComboBox" name="dir_box">
+     <property name="placeholderText">
+      <string>Выберите директорию</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

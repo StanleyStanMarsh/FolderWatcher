@@ -64,8 +64,11 @@ private:
     /// Путь до папки
     QString dir_path;
 
-    // Объект модели БД
+    /// Объект модели БД
     QSqlTableModel *SQLmodel;
+
+    /// Модель работы с файлами снапшота
+    QStandardItemModel *first_snap_files;
 };
 
 #endif // COMPAREWINDOW_H

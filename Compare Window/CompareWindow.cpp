@@ -13,12 +13,16 @@ CompareWindow::CompareWindow(QSqlTableModel *SQLmodel, QWidget *parent)
     // Достаем объект БД из MainWindow
     this->SQLmodel = SQLmodel;
 
-    // Добавляем список директорий со снапшотами из БД в comboBox
-    // (не нужно, список обновляется при открытии окна)
-    //updateDirectoriesList();
-
-    ui->right_table_view->setModel(SQLmodel);
-    ui->right_table_view->resizeColumnsToContents();
+    // Настраиваем таблицу для вывода файлов снапшота
+    first_snap_files = new QStandardItemModel;
+    first_snap_files->setColumnCount(2);
+    first_snap_files->setHorizontalHeaderLabels(QStringList{"name", "type"});
+    ui->left_table_view->resizeColumnsToContents();
+    ui->left_table_view->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->left_table_view->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->left_table_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->left_table_view->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->left_table_view->setModel(first_snap_files);
 
     // Вставляем начальный текст в окно сравнения
     ui->comparison_output->insertPlainText("Hello there\n");
@@ -78,6 +82,7 @@ void CompareWindow::updateSnapshotsList(){
     ui->left_snaphots_box->clear();
     ui->right_snapshots_box->clear();
     ui->comparison_output->clear();
+    first_snap_files->removeRows(0, first_snap_files->rowCount());
 
     // Если директория ещё не выбрана, то ничего не делаем
     if (ui->dir_box->currentIndex() == -1) return;
@@ -105,6 +110,8 @@ void CompareWindow::compareSnapshots(){
     // сравниваем выбранные снапшоты
 
 
+    first_snap_files->removeRows(0, first_snap_files->rowCount());
+
     int left_index = ui->left_snaphots_box->currentIndex();
     int right_index = ui->right_snapshots_box->currentIndex();
 
@@ -125,6 +132,23 @@ void CompareWindow::compareSnapshots(){
     // создаем снапшоты по полученным путям
     Snapshot left_snap(left_path);
     Snapshot right_snap(right_path);
+
+    // Получаем все внещние файлы и папки левого снапшота
+    QList<QPair<QString, QString>> left_files = left_snap.externalFiles();
+    // Сортируем (сначала папки)
+    std::sort(left_files.begin(), left_files.end(), [](const QPair<QString, QString>& a, const QPair<QString, QString>& b) {
+            return a.second > b.second;
+        });
+    // Заполняем таблицу
+    for (int i=0; i<left_files.size(); i++){
+        QStandardItem* item1 = new QStandardItem(left_files[i].first);
+        QStandardItem* item2 = new QStandardItem(left_files[i].second);
+
+        QList<QStandardItem*> rowItems;
+        rowItems << item1 << item2;
+
+        first_snap_files->appendRow(rowItems);
+    }
 
     // Получаем разницу в сделанных снапшотах
     QVector<ComparisonAnswer> compare_result = left_snap.compareSnapshots(right_snap);
