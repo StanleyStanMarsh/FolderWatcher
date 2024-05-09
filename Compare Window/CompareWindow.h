@@ -9,6 +9,8 @@
 #include <QSet>
 #include <QDateTime>
 
+#include "../Calculations/Snapshots/snapshot.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class CompareWindow; }
 QT_END_NAMESPACE

@@ -47,6 +47,9 @@
         </widget>
        </item>
        <item>
+        <widget class="QTextBrowser" name="comparison_output"/>
+       </item>
+       <item>
         <widget class="QTableView" name="right_table_view"/>
        </item>
       </layout>
