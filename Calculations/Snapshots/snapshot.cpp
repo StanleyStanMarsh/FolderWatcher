@@ -177,6 +177,22 @@ QVariantList Snapshot::collectInnerFilesInDir(QString folder_path, QVariantList&
     return inner_files;
 }
 
+Snapshot::Snapshot(QString file_path)
+{
+    //открыли файл
+    QFile fileJson(file_path);
+    //только для чтения
+    fileJson.open(QIODevice::ReadOnly);
+    //считали все из файла в QJsonObject
+    QJsonObject jsontmp = QJsonDocument::fromJson(fileJson.readAll()).object();
+    //Закинули все значения в поля класса
+    m_name = jsontmp["name"].toString();
+    m_Hash_sum = jsontmp["hash_sum"].toString();
+    m_last_change_date = jsontmp["last_changed_date"].toString();
+    m_size = jsontmp["size"].toInt();
+    m_inner_files = jsontmp["inner_files"].toArray();
+}
+
 QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
 {
     // результирующий вектор, содрежит в себе пару элементов: путь, до файла, который был изменен
