@@ -70,6 +70,7 @@ QJsonObject Snapshot::createSnapshotFile(QString file_path ,QJsonArray inner_fil
     tmp.insert("name", info.fileName());
     //qDebug() << hashsum << info.fileName();
     tmp.insert("last_changed_date", info.lastModified().toString("hh:mm:ss.zzz dd.MM.yyyy"));
+    tmp.insert("alt", checkForAltDS(file_path, m_hash_algorithm));
     // если создаем снапшот папки, размер папки берем из counter, и вписываем внутренние файлы, содержащиеся в папке.
     // если папка пустая, в снапшот попадет пустой список внутренних файлов.
     if(info.isDir())
@@ -88,6 +89,7 @@ QJsonObject Snapshot::createSnapshotFile(QString file_path ,QJsonArray inner_fil
     }
     return tmp;
 }
+
 
 
 
@@ -192,6 +194,49 @@ Snapshot::Snapshot(QString file_path)
     m_size = jsontmp["size"].toInt();
     m_inner_files = jsontmp["inner_files"].toArray();
 }
+QJsonArray Snapshot::checkForAltDS(QString filePath, ALG_ID hashAlgorithm)
+{
+      WIN32_FIND_STREAM_DATA findStreamData; //cтруктура с информацией о потоке
+
+       LPCWSTR filePathWin = reinterpret_cast<LPCWSTR>(filePath.utf16()); //приводим путь к формату win api LPCWSTR
+
+       bool hasAltDS = false; //флаг наличия у файла/директории потока, кроме главного (наличие альт потоков)
+
+      HANDLE hFind = FindFirstStreamW(filePathWin, FindStreamInfoStandard, &findStreamData, 0);
+
+     QJsonArray result;
+      if (hFind != INVALID_HANDLE_VALUE) {
+
+        do {
+          QJsonObject obj;
+          QString nameADS = QString::fromWCharArray(findStreamData.cStreamName); // получаем название альт потока
+          if (nameADS != "::$DATA")
+          {
+
+              nameADS = nameADS.section(':', 1, 1).section('$', 0, 0); //возвращаемое имя потока имеет вид ":имя_потока:$DATA", данными функциями вырезаем имя_потока
+              qDebug() << "Имя альтернативного потока: " << nameADS;
+              obj.insert("alt_name", nameADS);
+              LARGE_INTEGER streamSize = findStreamData.StreamSize;
+              qDebug() << "Размер альтернативного потока: " << streamSize.QuadPart << " байт";
+              obj.insert("alt_size", streamSize.QuadPart);
+              // Вычисление контрольной суммы ADS
+              QString hashSum = m_hash.calculateFileCheckSum(filePath + ':' + nameADS, hashAlgorithm);
+              qDebug() << "Контрольная сумма потока: " << hashSum;
+              obj.insert("alt_hash_sum", hashSum);
+              hasAltDS = true;
+          }
+          if(!obj.empty()) result.append(obj);
+
+           } while (FindNextStreamW(hFind, &findStreamData));
+
+        FindClose(hFind);
+      }
+      if (!hasAltDS) {
+          return {};
+        qDebug() << "Альтернативные потоки не найдены.";
+      }
+      return result;
+}
 
 QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
 {
@@ -200,7 +245,8 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
     QVector<ComparisonAnswer> result;
     // составляем словрарик, в котором ключи - путь до файла/папки из директории
     // значения - контрольные суммы фалов/папок
-    QMap<QString, QString> first_result, second_result;
+    QMap<QString, QPair<QString, QMap<QString, QString>>> first_result, second_result;
+
     // создаем словарик всех файлов в двух директориях
     for(auto it = m_inner_files.begin(); it!=m_inner_files.end(); ++it)
     {
@@ -210,20 +256,55 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
     {
          createCompareMap(other_it->toObject(),m_name, second_result);
     }
+    //qDebug() << first_result;
     auto key = first_result.keys().begin();
     // сравнение старого снапшота с новым
     while(!first_result.empty())
-    {
+        {
+        // смотрим, различаются ли альт.потоки
+            if (first_result[*key].second != second_result[*key].second)
+                {
+                   auto alt_key = first_result[*key].second.keys().begin();
+                   //такой же обход как и для обычных файлов.
+                   while(!first_result[*key].second.empty())
+                   {
+                        // если альтпотока с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
+                       if(second_result[*key].second.find(*alt_key) == second_result[*key].second.end())
+                       {
+                           qDebug() << "here";
+                           result.push_back({*key, deleted, true, *alt_key});
+                           first_result[*key].second.remove(*alt_key);
+                           alt_key++;
+                           continue;
+                       }
+                       // если контрольные суммы альтпотоков в одном адресе не равны, значит файл был именен
+                       else if (first_result[*key].second[*alt_key] != second_result[*key].second[*alt_key])
+                       {
+                           result.push_back({*key,edited, true, *alt_key});
+                       }
+                       first_result[*key].second.remove(*alt_key);
+                       second_result[*key].second.remove(*alt_key);
+                       alt_key++;
+                   }
+                   // если во втором векторе остались значения, значит они новые.
+                   auto alt_s_key = second_result[*key].second.keys().begin();
+                   while(!second_result[*key].second.empty())
+                   {
+                       result.push_back({*alt_s_key, appeared, true, *alt_key});
+                       second_result.remove(*alt_s_key);
+                       alt_s_key++;
+                   }
+                }
         // если элемента с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
         if(second_result.find(*key) == second_result.end())
         {
-            result.push_back({*key, deleted});
+            result.push_back({*key, deleted,false, ""});
             first_result.remove(*key);
             key++;
             continue;
         }
         // если контрольные суммы файлов/папок в одном адресе не равны, значит файл был именен
-        else if (first_result[*key] != second_result[*key]) result.push_back({*key,edited});
+        if (first_result[*key].first != second_result[*key].first) result.push_back({*key,edited, false, ""});
         first_result.remove(*key);
         second_result.remove(*key);
         key++;
@@ -233,7 +314,7 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
     auto s_key = second_result.keys().begin();
     while(!second_result.empty())
     {
-        result.push_back({*s_key, appeared});
+        result.push_back({*s_key, appeared, false, ""});
         second_result.remove(*s_key);
         s_key++;
     }
@@ -241,12 +322,17 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
     return result;
 }
 
-QMap<QString, QString> Snapshot::createCompareMap (QJsonObject obj, QString& parent_dir, QMap<QString, QString>& result)
+QMap<QString, QPair<QString, QMap<QString, QString>>> Snapshot::createCompareMap (QJsonObject obj, QString& parent_dir, QMap<QString, QPair<QString, QMap<QString, QString>>>& result)
 {
-    // если файлик, кидаем в result локальный путь до
+    QMap<QString, QString> alts;
+    for(int i =0; i< obj["alt"].toArray().size(); i++)
+    {
+        alts.insert(obj["alt"].toArray().at(i)["alt_name"].toString(),obj["alt"].toArray().at(i)["alt_hash_sum"].toString());
+    }
+    // если файлик, кидаем в result локальный путь до него, кс и инфу о альт потоках
     if(obj["inner_files"].toArray().empty())
     {
-        result.insert(parent_dir + "\\"+ obj["name"].toString(), obj["hash_sum"].toString());
+        result.insert(parent_dir + "\\"+ obj["name"].toString(), {obj["hash_sum"].toString(), alts});
     }
    // если папка
     else
@@ -255,7 +341,7 @@ QMap<QString, QString> Snapshot::createCompareMap (QJsonObject obj, QString& par
         QString tmp = parent_dir;
         tmp = parent_dir + "\\"+ obj["name"].toString();
         //дополянем путь до папки
-        result.insert(tmp, obj["hash_sum"].toString());
+        result.insert(tmp, {obj["hash_sum"].toString(), alts});
         for(int i =0; i< obj["inner_files"].toArray().size(); i++)
         {
             //рекурсивно обходим внутренние папки
