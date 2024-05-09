@@ -16,7 +16,7 @@ CompareWindow::CompareWindow(QSqlTableModel *SQLmodel, QWidget *parent)
     // Настраиваем таблицу для вывода файлов снапшота
     first_snap_files = new QStandardItemModel;
     first_snap_files->setColumnCount(2);
-    first_snap_files->setHorizontalHeaderLabels(QStringList{"name", "type"});
+    first_snap_files->setHorizontalHeaderLabels(QStringList{"Имя", "Тип"});
     ui->left_table_view->resizeColumnsToContents();
     ui->left_table_view->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->left_table_view->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -137,7 +137,7 @@ void CompareWindow::compareSnapshots(){
     QList<QPair<QString, QString>> left_files = left_snap.externalFiles();
     // Сортируем (сначала папки)
     std::sort(left_files.begin(), left_files.end(), [](const QPair<QString, QString>& a, const QPair<QString, QString>& b) {
-            return a.second > b.second;
+            return a.second < b.second;
         });
     // Заполняем таблицу
     for (int i=0; i<left_files.size(); i++){
@@ -176,8 +176,14 @@ void CompareWindow::compareSnapshots(){
 
         ui->comparison_output->append(flag);
 
-        ui->comparison_output->append(compare_result[i].path);
-        ui->comparison_output->append("\n");
+        // Удаление первой папки
+        int firstSlash = compare_result[i].path.indexOf('\\');
+        QString newPath;
+        if (firstSlash != -1)
+            newPath = compare_result[i].path.mid(firstSlash + 1);
+
+        ui->comparison_output->append(newPath);
+        ui->comparison_output->append("");
     }
 
     // Если изменений нет, то выводим сообщение об этом

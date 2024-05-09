@@ -275,10 +275,10 @@ QList<QPair<QString, QString>> Snapshot::externalFiles(){
         QJsonObject object = value.toObject();
         // Если это папка
         if (object.contains("inner_files")){
-            result.append(QPair<QString, QString>(value["name"].toString(), "Folder"));
+            result.append(QPair<QString, QString>(value["name"].toString(), "Папка"));
         }
         else {
-            result.append(QPair<QString, QString>(value["name"].toString(), "File"));
+            result.append(QPair<QString, QString>(value["name"].toString(), "Файл"));
         }
     }
     return result;
