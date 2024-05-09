@@ -42,19 +42,26 @@ QString HashSum::calculateFileCheckSum(QString filePath, const ALG_ID &hashAlgor
 
     if (!filePath.isEmpty()) //если путь к файлу не пустой
     {
-        QString fileContents; //считанные данные из текстового потока файла
+        QByteArray fileContents; //считанные данные из текстового потока файла
 
-            QFile file(filePath); //открываем файл
+        QFile file(filePath); //открываем файл
 
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) //открываем для чтения
+        if (file.open(QIODevice::ReadOnly)) //открываем для чтения
+        {
+            while (!file.atEnd())
             {
-                QTextStream in(&file); //получаем текстовый поток файла
-                fileContents = in.readAll(); //и вписываем все в строку
-                file.close();
+            fileContents = file.read(4096); //вписываем все в строку в массив байтов
             }
+            file.close();
+        }
+        else
+        {
+            qDebug() << "ошибка открытия файла";
+        }
 
-       hashString = calculateStringHash(fileContents, hashAlgorithm); //получаем контрольную сумму от длинной строки fileContents
+       hashString = calculateStringHash(fileContents.toHex(), hashAlgorithm); //получаем контрольную сумму от длинной строки fileContents
     }
+    qDebug() << hashString << filePath;
     return hashString;
 }
 
@@ -134,12 +141,13 @@ void HashSum::getHashSums(const QModelIndexList &selected_files, const QFileSyst
         if (dir->isDir(item)) {
             QString folder_path = dir->filePath(item);
 
+            /* Уходит в бесконечную загрузку, без проверки все работает
             QDir directory(folder_path);
             if (directory.exists() && directory.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries).count() == 0)
             {
                 qDebug() << "Пустая папка!";
                 return;
-            }
+            }*/
 
 
             //folder_path.replace('/', "\\\\");
