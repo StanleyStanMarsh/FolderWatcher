@@ -26,7 +26,7 @@ public:
      *
      * @param dir_path Путь до папки
      */
-    void catchDirPath(QString dir_path) { this->dir_path = dir_path; }
+    [[maybe_unused]] void catchDirPath(QString dir_path) { this->dir_path = dir_path; }
 
     /**
      * Перегруженная функция события закрытия окна, в которой отправляется сигнал о закрытии
@@ -62,7 +62,7 @@ private:
     Ui::CompareWindow *ui;
 
     /// Путь до папки
-    QString dir_path;
+    [[maybe_unused]] QString dir_path;
 
     /// Объект модели БД
     QSqlTableModel *SQLmodel;

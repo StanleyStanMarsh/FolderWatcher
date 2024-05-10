@@ -159,15 +159,15 @@ void CompareWindow::compareSnapshots(){
         QString flag;
         switch (compare_result[i].flag) {
         case ComparisonFlags::deleted:
-            flag = " <b>Удален:</b>";
+            flag = " <b><font color=#ff0000>Удален:</font></b>";
             break;
 
         case ComparisonFlags::edited:
-            flag = " <b>Изменен:</b>";
+            flag = " <b><font color=#ffa500>Изменен:</font></b>";
             break;
 
         case ComparisonFlags::appeared:
-            flag = " <b>Добавлен:</b>";
+            flag = " <b><font color=#008000>Добавлен:</font></b>";
             break;
 
         default:
