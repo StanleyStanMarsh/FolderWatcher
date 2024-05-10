@@ -127,7 +127,7 @@ void CompareWindow::compareSnapshots(){
     QString left_path = SQLmodel->record(left_index).value("SnapshotPath").toString();
     QString right_path = SQLmodel->record(right_index).value("SnapshotPath").toString();
 
-    qDebug() <<left_path << ' ' << right_path;
+    //qDebug() <<left_path << ' ' << right_path;
 
     // создаем снапшоты по полученным путям
     Snapshot left_snap(left_path);

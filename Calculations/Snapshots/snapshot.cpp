@@ -261,6 +261,14 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
     // сравнение старого снапшота с новым
     while(!first_result.empty())
         {
+        // если элемента с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
+        if(second_result.find(*key) == second_result.end())
+        {
+            result.push_back({*key, deleted,false, ""});
+            first_result.remove(*key);
+            key++;
+            continue;
+        }
         // смотрим, различаются ли альт.потоки
             if (first_result[*key].second != second_result[*key].second)
                 {
@@ -295,14 +303,7 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
                        alt_s_key++;
                    }
                 }
-        // если элемента с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
-        if(second_result.find(*key) == second_result.end())
-        {
-            result.push_back({*key, deleted,false, ""});
-            first_result.remove(*key);
-            key++;
-            continue;
-        }
+
         // если контрольные суммы файлов/папок в одном адресе не равны, значит файл был именен
         if (first_result[*key].first != second_result[*key].first) result.push_back({*key,edited, false, ""});
         first_result.remove(*key);
