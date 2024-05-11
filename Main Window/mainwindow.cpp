@@ -5,9 +5,13 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    // настройка модели работы с директориями
     ui->setupUi(this);
+
+    this->setWindowTitle("Folder Watcher");
+
+    // -------------------- Настройка модели работы с директориями ----------------
     dir = new QFileSystemModel;
+
     dir->setRootPath(QDir::currentPath());
     ui->listView->setModel(dir);
     ui->listView->setRootIndex(dir->index(QDir::currentPath()));
@@ -17,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->path_line->setText(QDir::currentPath());
 
-    // настройка модели работы с инфой о директориях
+    // --------------- Настройка отображения с инфой о директориях -------------
     info = new QStandardItemModel;
     ui->tableView->resizeColumnsToContents();
     QHeaderView *header = ui->tableView->horizontalHeader();
@@ -27,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableView->setModel(info);
 
+    // ----------------------- Хранилища ---------------------------
     // Ищем доступные локальные хранилища и добавляем их в комбо бокс
     QStringList storages_paths;
     foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
@@ -44,6 +49,10 @@ MainWindow::MainWindow(QWidget *parent)
     Logger *logger = new Logger(this);
     logger->moveToThread(&logger_thread);
 
+    // Объект для формирования снапшотов
+    Snapshot *snap = new Snapshot();
+    snap->moveToThread(&snapshot_thread);
+
     // Создаем окно загрузки и скрываем его
     loading_window = new LoadingWindow();
     loading_window->hide();
@@ -54,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionSHA_512, &QAction::triggered, this, &MainWindow::chooseSHA_512);
     connect(ui->actionMD5, &QAction::triggered, this, &MainWindow::chooseMD5);
 
+    // ---------------------- HashSum -----------------------------------------
     // Коннектим завершение потока с планированием удаления "вычислителя" КС
     connect(&hash_sum_thread, &QThread::finished, calculator, &QObject::deleteLater);
     // Коннектим сигнал с данными о выделенных файлах и папках со слотом вычисления КС
@@ -61,12 +71,21 @@ MainWindow::MainWindow(QWidget *parent)
     // Коннектим сигнал о завершении вычисления КС с внесением полученных данных в таблицу
     connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::handleHashSumCalculations);
 
+    // ---------------------- Logger -----------------------------------------
     // Коннектим завершение потока с планированием удаления логгера
     connect(&logger_thread, &QThread::finished, logger, &QObject::deleteLater);
-    // Коннектим сигнал о возникшей ошибке с логом
-    connect(calculator, &HashSum::errorOccured, &Logger::logHashSumToFile);
-    // Коннектим сигнал о возникшей ошибке с логом
-    connect(this, &MainWindow::errorOccured, &Logger::logSizeToFile);
+    // Коннектим сигналы о возникших ошибках с логом
+    connect(calculator, &HashSum::errorOccured, logger, &Logger::logHashSumToFile);
+    connect(this, &MainWindow::errorOccured, logger, &Logger::logExceptionToFile);
+    connect(snap, &Snapshot::errorOccured, logger, &Logger::logExceptionToFile);
+
+    // ---------------------- Snapshot -----------------------------------------
+    // Коннектим завершение потока с планированием удаления снапшота
+    connect(&snapshot_thread, &QThread::finished, snap, &QObject::deleteLater);
+    // Коннектим сигнал с данными о выделенных файлах и папках со слотом вычисления КС
+    connect(this, &MainWindow::returnSnapshot, snap, &Snapshot::calculate);
+    // Коннектим сигнал о завершении вычисления КС с внесением полученных данных в таблицу
+    connect(snap, &Snapshot::snapshotReady, this, &MainWindow::handleSnapshotCalculations);
 
     // // Коннектим сигнал о завершении вычисления КС с показом логов
     // connect(calculator, &HashSum::hashSumsReady, this, &MainWindow::showHashSumLogs);
@@ -77,6 +96,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     logger_thread.start();
 
+    snapshot_thread.start();
+
+    // ------------------- Кнопки, вьюшки и тд. -------------------------------------
     // Коннектим двойное нажатие по папке/файлу к его открытию
     connect(ui->listView, &QListView::doubleClicked, this, &MainWindow::goDownDir);
     // Коннектим нажатие по кнопке с поднятием на одну папку наверх
@@ -87,6 +109,37 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->storages_box, &QComboBox::textActivated, this, &MainWindow::goToStorage);
     // Коннектим изменение корневого пути в модели с его отображением в строке
     connect(dir, &QFileSystemModel::rootPathChanged, ui->path_line, &QLineEdit::setText);
+
+    // --------------------------- Настройка БД ------------------------------------
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("./testDB.db");
+    // Проверяем успешность открытия БД
+    if (db.open()) qDebug("DB opened");
+    else qDebug("DB open error!!");
+
+    // Если в БД нет таблицы с инфой о снапшотах, то создаем её
+    query = new QSqlQuery(db);
+    //query->exec("DROP TABLE IF EXISTS Snaps;");
+    query->exec("CREATE TABLE IF NOT EXISTS Snaps(DirectoryPath TEXT, SnapshotPath TEXT, SaveDate DATE);");
+
+    // Задаем Qt модель для работы
+    SQLmodel = new QSqlTableModel(this, db);
+    SQLmodel->setTable("Snaps");
+    SQLmodel->select();
+    SQLmodel->submitAll();
+    SQLmodel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    // ui->tableView->setModel(SQLmodel);
+
+    // Создаем директорию под снапшоты
+    createDirectory("./snapshots");
+
+    // -------------------- Compare Window --------------------------------------
+    // Окно сравнения
+    compare_window = new CompareWindow(SQLmodel);
+    // compare_window->moveToThread(&compare_window_thread);
+    compare_window->hide();
+    // Коннектим закрытие окна сравнения с открытием главного окна
+    connect(compare_window, &CompareWindow::closed, this, &MainWindow::show);
 }
 
 void MainWindow::goDownDir(const QModelIndex &index) {
@@ -193,6 +246,9 @@ MainWindow::~MainWindow()
     hash_sum_thread.wait();
     logger_thread.quit();
     logger_thread.wait();
+    snapshot_thread.quit();
+    snapshot_thread.wait();
+    delete compare_window;
 }
 
 void MainWindow::on_info_message_triggered() const
@@ -201,7 +257,7 @@ void MainWindow::on_info_message_triggered() const
     info_box.setWindowTitle("О программе...");
     info_box.setBaseSize(200, 100);
     info_box.setIcon(QMessageBox::Information);
-    info_box.setText("<b>Программа FolderWatcher ver. 0.2</b>");
+    info_box.setText("<b>Программа FolderWatcher ver. 0.9</b>");
     info_box.setInformativeText("<b>Разработчик ДИПМаксМакс</b>");
     info_box.exec();
 }
@@ -251,7 +307,7 @@ QString MainWindow::getMinimizedFormSize(double &f_size) {
     QVector<QString> units {"Kbytes", "Mbytes", "Gbytes"};
     int i = 0;
     // Делим пока можем на 1024 и меняем соответсвтенно приставку
-    while (f_size > 1024 && i < 2) {
+    while (f_size > 1024 && i < units.size()) {
         f_size /= 1024.0;
         unit = units[i++];
     }
@@ -340,7 +396,58 @@ void MainWindow::chooseMD5() {
 
 void MainWindow::on_show_log_2_triggered()
 {
-    // NOTE: открываем файл с логами (не факт что работает, так и не смог протестить)
-    QDesktopServices::openUrl(QUrl::fromLocalFile("log.txt"));
+    QProcess proc;
+    proc.startDetached("notepad.exe", QStringList{"log.txt"});
+}
+
+void MainWindow::on_actionSaveSnap_triggered()
+{
+    loading_window->show();
+
+    // имя файла - текущее время
+    QDateTime currentTime = QDateTime::currentDateTime();
+    QString fileName = QFileInfo(dir->rootPath()).fileName() + "_" + currentTime.toString("hhmmsszzzddMMyyyy");
+
+    emit returnSnapshot(dir->rootPath(), fileName, CALG_SHA_256, currentTime);
+    // qDebug() << "here";
+}
+
+bool MainWindow::createDirectory(const QString &path) {
+    QDir dir;
+    if (dir.exists(path)) {
+        qDebug() << "Directory already exists:" << path;
+        return true;
+    } else {
+        if (dir.mkpath(path)) {
+            qDebug() << "Directory created:" << path;
+            return true;
+        } else {
+            qDebug() << "Failed to create directory:" << path;
+            return false;
+        }
+    }
+}
+
+void MainWindow::handleSnapshotCalculations(const QString file_name, const QDateTime current_time) {
+    QSqlRecord record = SQLmodel->record();
+    record.setValue("DirectoryPath", dir->rootPath());
+    record.setValue("SnapshotPath", QDir::currentPath() + "/snapshots/" + file_name + ".json");
+    record.setValue("SaveDate", current_time);
+
+    SQLmodel->setFilter("");
+    SQLmodel->insertRecord(SQLmodel->rowCount(), record);
+    SQLmodel->submitAll();
+    loading_window->hide();
+}
+
+void MainWindow::on_action_load_snap_triggered()
+{
+    // передаем в окно сравнения путь нужной директории
+    //compare_window->catchDirPath(dir->rootPath());
+
+    // обновляем список снапшотов
+    compare_window->updateDirectoriesList();
+    compare_window->show();
+    this->close();
 }
 

@@ -23,11 +23,18 @@
 #include <QDesktopServices>
 #include <experimental/filesystem>
 #include <string>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlTableModel>
+#include <QSqlRecord>
+#include <QProcess>
 
 #include "../Calculations/Hash Sum/HashSum.h"
 #include "../Loading Window/LoadingWindow.h"
 #include "ShortcutsEventFilter.h"
 #include "../Logger/Logger.h"
+#include "../Calculations/Snapshots/snapshot.h"
+#include "../Compare Window/CompareWindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -82,6 +89,11 @@ private slots:
     void on_info_message_triggered() const;
 
     /**
+     * Слот для сохранения снапшота из меню
+     */
+    void on_actionSaveSnap_triggered();
+
+    /**
      * Слот для перехода в корень выбранного локального хранилища
      *
      * @param storage_path Путь к целевому носителю хранения,
@@ -134,6 +146,14 @@ private slots:
     void handleHashSumCalculations(const HashSumRow &vec_rows, const QString &elapsed_time);
 
     /**
+     * Слот для принятия результатов формирования снапшотов
+     *
+     * @param file_name Имя файла
+     * @param current_time Время создания снапшота
+     */
+    void handleSnapshotCalculations(const QString file_name, const QDateTime current_time);
+
+    /**
      * Слот для перехвата ошибок при вычислении контрольных сумм
      *
      * @param error Возникающие ошибки
@@ -153,11 +173,12 @@ private slots:
      */
     [[maybe_unused]] void showHashSumLogs();
 
-    // FIXME: функция не работает как и сам объект
     /**
      * Слот для открытия файла логов
      */
     void on_show_log_2_triggered();
+
+    void on_action_load_snap_triggered();
 
 signals:
 
@@ -170,6 +191,15 @@ signals:
      */
     void returnHashSum(const QModelIndexList& selected_files, const QFileSystemModel *dir_info,
                        const ALG_ID &hashAlgorithm);
+
+    /**
+     * Сигнал, который отправляет инфу о директории при нажатии пункта меню "Сохранить снапшот"
+     *
+     * @param dir_path
+     * @param hash_algorithm
+     */
+    void returnSnapshot(const QString dir_path, const QString fil_name,
+                        const ALG_ID hash_algorithm, const QDateTime current_time);
 
     void errorOccured(const std::exception &e, const QString &file_path);
 
@@ -198,6 +228,14 @@ private:
      */
     QString getMinimizedFormSize(double &f_size);
 
+    /**
+     * Функция для создания директории под снапшоты
+     *
+     * @param path - путь до нужной директории
+     * @return true - директория уже была/создана, false - не удалось создать директорию
+     */
+    bool createDirectory(const QString &path);
+
     /// Графическая форма окна
     Ui::MainWindow *ui;
 
@@ -212,13 +250,27 @@ private:
     /// Отдельный поток для ведения логов
     QThread logger_thread;
 
+    /// Отдельный поток для снапшотов
+    QThread snapshot_thread;
+
+    /// Окно сравнения снапшотов
+    CompareWindow *compare_window;
+
     /// Окно загрузки
     LoadingWindow *loading_window;
 
     /// Фильтр событий отключающий горячие клавиши
     ShortcutsEventFilter *filter;
 
+    /// Снапшоты директорий
+    Snapshot *snap;
+
     /// Лог для сбора ошибок при подсчете КС
     QString hash_sum_log;
+
+    /// Работа с БД
+    QSqlDatabase db;
+    QSqlQuery *query;
+    QSqlTableModel *SQLmodel;
 };
 #endif // MAINWINDOW_H

@@ -32,7 +32,7 @@ void Logger::logHashSumToFile(const HashSumErrors &error, const QString &file_pa
     file.close();
 }
 
-void Logger::logSizeToFile(const std::exception &e, const QString &file_path)
+void Logger::logExceptionToFile(const std::exception &e, const QString &file_path)
 {
     QFile file("log.txt");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Append)) return;
