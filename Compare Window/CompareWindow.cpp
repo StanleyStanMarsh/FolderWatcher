@@ -182,6 +182,10 @@ void CompareWindow::compareSnapshots(){
         if (firstSlash != -1)
             newPath = compare_result[i].path.mid(firstSlash + 1);
 
+        // проверяем есть ли альт поток
+        if (compare_result[i].isAlt)
+            newPath += " поток: " + compare_result[i].alt_name;
+
         ui->comparison_output->append(newPath);
         ui->comparison_output->append("");
     }
