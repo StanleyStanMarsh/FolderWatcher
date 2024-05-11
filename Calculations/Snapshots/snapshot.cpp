@@ -283,7 +283,7 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
                 key++;
                 continue;
             }
-            qDebug() << *s_kil.begin();
+            //qDebug() << *s_kil.begin();
             QList<QString>::iterator alt_key;
             QList<QString>::iterator alt_s_key;
             //такой же обход как и для обычных файлов.
