@@ -171,8 +171,8 @@ void MainWindow::showMainInfo() {
     info->clear();
 
     // установка названий столбцов
-    info->setColumnCount(4);
-    info->setHorizontalHeaderLabels(QStringList{"name", "date", "type", "size"});
+    info->setColumnCount(5);
+    info->setHorizontalHeaderLabels(QStringList{"name", "date", "type", "size", "alt"});
 
     // Получаем индекс текущей директории и количество файлов в директории
     QModelIndex currentDirIndex = dir->index(dir->rootPath());
@@ -228,6 +228,11 @@ void MainWindow::showMainInfo() {
             else
                 row << new QStandardItem("");
         }
+
+        // Получаем названия альтернативных потоков
+        QString alt = "Нет альт.потоков";
+        alt = checkForAltDS(dir->filePath(fileIndex));
+        row << new QStandardItem(alt);
 
         info->appendRow(row);
     }
@@ -451,3 +456,37 @@ void MainWindow::on_action_load_snap_triggered()
     this->close();
 }
 
+QString MainWindow::checkForAltDS(QString filePath) {
+    QString alts = "";
+
+    WIN32_FIND_STREAM_DATA findStreamData; //cтруктура с информацией о потоке
+
+    LPCWSTR filePathWin = reinterpret_cast<LPCWSTR>(filePath.utf16()); //приводим путь к формату win api LPCWSTR
+
+    bool hasAltDS = false; //флаг наличия у файла/директории потока, кроме главного (наличие альт потоков)
+
+    HANDLE hFind = FindFirstStreamW(filePathWin, FindStreamInfoStandard, &findStreamData, 0);
+
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            QString nameADS = QString::fromWCharArray(findStreamData.cStreamName); // получаем название альт потока
+            if (nameADS != "::$DATA")
+            {
+                nameADS = nameADS.section(':', 1, 1).section('$', 0, 0); //возвращаемое имя потока имеет вид ":имя_потока:$DATA", данными функциями вырезаем имя_потока
+                alts += nameADS + ", ";
+                hasAltDS = true;
+            }
+
+        } while (FindNextStreamW(hFind, &findStreamData));
+
+        FindClose(hFind);
+    }
+    if (!hasAltDS) {
+        alts = "Нет альт.потоков  ";
+    }
+
+    alts.removeLast();
+    alts.removeLast();
+
+    return alts;
+}

@@ -236,6 +236,15 @@ private:
      */
     bool createDirectory(const QString &path);
 
+    /**
+     * Функция для создания директории под снапшоты
+     *
+     * @param filePath - путь до нужной директории
+     * @param hashAlgorithm - алгоритм
+     * @return QString - все альт.потоки через запятую
+     */
+    QString checkForAltDS(QString filePath);
+
     /// Графическая форма окна
     Ui::MainWindow *ui;
 
