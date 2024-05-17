@@ -9,13 +9,15 @@
 #include <string>
 #include <windows.h>
 #include <cassert>
+#include <QTextBrowser>
 
 class RealTimeWatcher : public QObject
 {
     Q_OBJECT
     QFileSystemModel *dir;
+    QTextBrowser *out;
 public:
-    explicit RealTimeWatcher(QFileSystemModel *_dir, QObject *parent = nullptr);
+    explicit RealTimeWatcher(QFileSystemModel *_dir, QTextBrowser *_out, QObject *parent = nullptr);
 
 public slots:
     // void changeDir(const QString &_dir_path);

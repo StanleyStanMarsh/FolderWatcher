@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
     loading_window->hide();
 
     // Создаем отслеживатель
-    RealTimeWatcher *rtw = new RealTimeWatcher(dir);
+    RealTimeWatcher *rtw = new RealTimeWatcher(dir, ui->realTimeLog);
     rtw->moveToThread(&rtw_thread);
 
     // Коннектим нажатие на кнопки подсчета КС к слоту-отправителю сигнала с данными о выделенных
@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent)
     // connect(this->dir, &QFileSystemModel::rootPathChanged, rtw, &RealTimeWatcher::changeDir);
     //
     connect(this, &MainWindow::showed, rtw, &RealTimeWatcher::watch);
+    connect(dir, &QFileSystemModel::rootPathChanged, rtw, &RealTimeWatcher::watch);
 
     hash_sum_thread.start();
 

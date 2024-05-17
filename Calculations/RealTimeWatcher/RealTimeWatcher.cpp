@@ -1,68 +1,46 @@
 #include "RealTimeWatcher.h"
 
-RealTimeWatcher::RealTimeWatcher(QFileSystemModel *_dir, QObject *parent)
+RealTimeWatcher::RealTimeWatcher(QFileSystemModel *_dir, QTextBrowser *_out, QObject *parent)
     : QObject{parent}
 {
     this->dir = _dir;
+    this->out = _out;
 }
-
-// void RealTimeWatcher::changeDir(const QString &_dir_path)
-// {
-//     qDebug() << "here";
-//     this->dir_path = _dir_path;
-//     this->file = CreateFile(this->dir_path.toStdWString().c_str(),
-//         FILE_LIST_DIRECTORY,
-//         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-//         NULL,
-//         OPEN_EXISTING,
-//         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-//         NULL);
-//     assert(this->file != INVALID_HANDLE_VALUE);
-
-//     this->overlapped.hEvent = CreateEvent(NULL, FALSE, 0, NULL);
-//     uint8_t change_buf[1024];
-//     BOOL success = ReadDirectoryChangesW(
-//         this->file, change_buf, 1024, TRUE,
-//         FILE_NOTIFY_CHANGE_FILE_NAME |
-//         FILE_NOTIFY_CHANGE_DIR_NAME |
-//         FILE_NOTIFY_CHANGE_LAST_WRITE,
-//         NULL, &(this->overlapped), NULL);
-// }
 
 void RealTimeWatcher::watch()
 {
 
-    qDebug() << "watching";
+    //
+    QString q_dir_path = this->dir->rootDirectory().absolutePath();
+    const wchar_t* dir_path = q_dir_path.toStdWString().c_str();
+
+    HANDLE file = CreateFile(dir_path,
+        FILE_LIST_DIRECTORY,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+        NULL);
+    assert(file != INVALID_HANDLE_VALUE);
+    OVERLAPPED overlapped;
+    overlapped.hEvent = CreateEvent(NULL, FALSE, 0, NULL);
+
     uint8_t change_buf[1024];
+    BOOL success = ReadDirectoryChangesW(
+        file, change_buf, 1024, TRUE,
+        FILE_NOTIFY_CHANGE_FILE_NAME |
+        FILE_NOTIFY_CHANGE_DIR_NAME |
+        FILE_NOTIFY_CHANGE_LAST_WRITE,
+        NULL, &overlapped, NULL);
+
+    //qDebug() << "watching";
+    //out->clear();
     while (true) {
 
-        QString q_dir_path = this->dir->rootDirectory().absolutePath();
-        const wchar_t* dir_path = q_dir_path.toStdWString().c_str();
-        // qDebug() << q_dir_path;
-        HANDLE file = CreateFile(dir_path,
-            FILE_LIST_DIRECTORY,
-            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-            NULL,
-            OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-            NULL);
-        assert(file != INVALID_HANDLE_VALUE);
-
-        OVERLAPPED overlapped;
-        overlapped.hEvent = CreateEvent(NULL, FALSE, 0, NULL);
-
-        BOOL success = ReadDirectoryChangesW(
-            file, change_buf, 1024, TRUE,
-            FILE_NOTIFY_CHANGE_FILE_NAME |
-            FILE_NOTIFY_CHANGE_DIR_NAME |
-            FILE_NOTIFY_CHANGE_LAST_WRITE,
-            NULL, &overlapped, NULL);
 
         if (q_dir_path.isEmpty()) continue;
 
         DWORD result = WaitForSingleObject(overlapped.hEvent, 0);
-
-
 
         if (result == WAIT_OBJECT_0) {
 
@@ -73,37 +51,59 @@ void RealTimeWatcher::watch()
 
             for (;;) {
 
-                DWORD name_len = event->FileNameLength / sizeof(wchar_t);
+                size_t name_len = event->FileNameLength / sizeof(WCHAR);
+                QString file_name = QString::fromWCharArray(event->FileName, name_len);
 
                 switch (event->Action) {
                 case FILE_ACTION_ADDED: {
-                    qDebug() << "added";
-                    wprintf(L"       Added: %.*s\n", name_len, event->FileName);
+                    //qDebug() << "added";
+                    //wprintf(L"       Added: %.*s\n", name_len, event->FileName);
+                    out->insertHtml(QString("<font face=»Arial»>"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "Added: %1<br>").arg(file_name));
                 } break;
 
                 case FILE_ACTION_REMOVED: {
-                    qDebug() << "removed";
-                    wprintf(L"     Removed: %.*s\n", name_len, event->FileName);
+                    //qDebug() << "removed";
+                    //wprintf(L"     Removed: %.*s\n", name_len, event->FileName);
+                    out->insertHtml(QString("<font face=»Arial»>"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "Removed: %1<br>").arg(file_name));
                 } break;
 
                 case FILE_ACTION_MODIFIED: {
-                    qDebug() << "Modified";
-                    wprintf(L"    Modified: %.*s\n", name_len, event->FileName);
+                    //qDebug() << "Modified";
+                    //wprintf(L"    Modified: %.*s\n", name_len, event->FileName);
+                    out->insertHtml(QString("<font face=»Arial»>"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;Modified: %1<br>").arg(file_name));
                 } break;
 
                 case FILE_ACTION_RENAMED_OLD_NAME: {
-                    qDebug() << "Renamed";
-                    wprintf(L"Renamed from: %.*s\n", name_len, event->FileName);
+                    //qDebug() << "Renamed";
+                    //wprintf(L"Renamed from: %.*s\n", name_len, event->FileName);
+                    out->insertHtml(QString("<font face=»Arial»>"
+                                            "Renamed from: %1<br>").arg(file_name));
                 } break;
 
                 case FILE_ACTION_RENAMED_NEW_NAME: {
-                    qDebug() << "to";
-                    wprintf(L"          to: %.*s\n", name_len, event->FileName);
+                    //qDebug() << "to";
+                    //wprintf(L"          to: %.*s\n", name_len, event->FileName);
+                    out->insertHtml(QString("<font face=»Arial»>"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;to: %1<br>").arg(file_name));
                 } break;
 
                 default: {
                     qDebug() << "unknown action";
-                    printf("Unknown action!\n");
+                    //printf("Unknown action!\n");
                 } break;
                 }
 
@@ -127,5 +127,13 @@ void RealTimeWatcher::watch()
         }
 
         // Do other loop stuff here...
+        // При смене директории выходим из функции
+        if (q_dir_path != this->dir->rootDirectory().absolutePath()){
+            //qDebug() << "Конец слежки, папка изменилась";
+            out->insertHtml(QString("<font face=»Arial»>"
+                                    "Dir changed! <br><br><br>"));
+            return;
+        }
+
     }
 }
