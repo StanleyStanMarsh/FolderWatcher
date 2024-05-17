@@ -18,6 +18,7 @@ SOURCES += \
     'Calculations/Hash Sum/HashSum.cpp' \
     'Loading Window/LoadingWindow.cpp' \
     'Main Window/ShortcutsEventFilter.cpp' \
+    Calculations/RealTimeWatcher/RealTimeWatcher.cpp \
     Calculations/Snapshots/snapshot.cpp \
     'Compare Window/CompareWindow.cpp' \
     Logger/Logger.cpp \
@@ -28,6 +29,7 @@ HEADERS += \
     'Calculations/Hash Sum/HashSum.h' \
     'Loading Window/LoadingWindow.h' \
     'Main Window/ShortcutsEventFilter.h' \
+    Calculations/RealTimeWatcher/RealTimeWatcher.h \
     Calculations/Snapshots/snapshot.h \
     'Compare Window/CompareWindow.h' \
     Logger/Logger.h

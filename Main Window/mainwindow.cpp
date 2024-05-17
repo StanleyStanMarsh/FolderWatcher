@@ -57,6 +57,10 @@ MainWindow::MainWindow(QWidget *parent)
     loading_window = new LoadingWindow();
     loading_window->hide();
 
+    // Создаем отслеживатель
+    RealTimeWatcher *rtw = new RealTimeWatcher(dir);
+    rtw->moveToThread(&rtw_thread);
+
     // Коннектим нажатие на кнопки подсчета КС к слоту-отправителю сигнала с данными о выделенных
     // файлах и папках
     connect(ui->actionSHA_256, &QAction::triggered, this, &MainWindow::chooseSHA_256);
@@ -92,11 +96,22 @@ MainWindow::MainWindow(QWidget *parent)
     // // Коннектим сигнал об ошибках со сбором ошибок
     // connect(calculator, &HashSum::errorOccured, this, &MainWindow::handleHashSumErrors);
 
+
+    // ---------------------- Real Time Watcher --------------------------------
+    // Коннектим завершение потока с планированием удаления отслеживателя
+    connect(&rtw_thread, &QThread::finished, rtw, &QObject::deleteLater);
+    // Коннектим изменение корневого пути с изменением отслеживаемой директории
+    // connect(this->dir, &QFileSystemModel::rootPathChanged, rtw, &RealTimeWatcher::changeDir);
+    //
+    connect(this, &MainWindow::showed, rtw, &RealTimeWatcher::watch);
+
     hash_sum_thread.start();
 
     logger_thread.start();
 
     snapshot_thread.start();
+
+    rtw_thread.start();
 
     // ------------------- Кнопки, вьюшки и тд. -------------------------------------
     // Коннектим двойное нажатие по папке/файлу к его открытию
@@ -253,6 +268,8 @@ MainWindow::~MainWindow()
     logger_thread.wait();
     snapshot_thread.quit();
     snapshot_thread.wait();
+    rtw_thread.quit();
+    rtw_thread.wait();
     delete compare_window;
 }
 
@@ -489,4 +506,9 @@ QString MainWindow::checkForAltDS(QString filePath) {
     alts.removeLast();
 
     return alts;
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    emit showed();
 }

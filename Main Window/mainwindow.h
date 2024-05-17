@@ -35,6 +35,7 @@
 #include "../Logger/Logger.h"
 #include "../Calculations/Snapshots/snapshot.h"
 #include "../Compare Window/CompareWindow.h"
+#include "../Calculations/RealTimeWatcher/RealTimeWatcher.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -203,6 +204,8 @@ signals:
 
     void errorOccured(const std::exception &e, const QString &file_path);
 
+    void showed();
+
 private:
     /**
      * Функция для получения размера директории
@@ -262,6 +265,9 @@ private:
     /// Отдельный поток для снапшотов
     QThread snapshot_thread;
 
+    /// Отдельный поток для слежения за изменениями в директории
+    QThread rtw_thread;
+
     /// Окно сравнения снапшотов
     CompareWindow *compare_window;
 
@@ -281,5 +287,9 @@ private:
     QSqlDatabase db;
     QSqlQuery *query;
     QSqlTableModel *SQLmodel;
+
+protected:
+    void showEvent(QShowEvent *event) override;
+
 };
 #endif // MAINWINDOW_H
