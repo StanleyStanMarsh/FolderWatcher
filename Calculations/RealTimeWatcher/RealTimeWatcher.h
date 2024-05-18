@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <cassert>
 #include <QTextBrowser>
+#include <QScrollBar>
 
 class RealTimeWatcher : public QObject
 {

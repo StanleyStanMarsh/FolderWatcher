@@ -181,6 +181,8 @@ private slots:
 
     void on_action_load_snap_triggered();
 
+    void on_drop_db_action_triggered();
+
 signals:
 
     /**
@@ -204,7 +206,9 @@ signals:
 
     void errorOccured(const std::exception &e, const QString &file_path);
 
-    void showed();
+    void errorSqlOccured(const QSqlError &e);
+
+    [[maybe_unused]] void showed();
 
 private:
     /**

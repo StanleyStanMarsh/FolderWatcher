@@ -82,6 +82,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(calculator, &HashSum::errorOccured, logger, &Logger::logHashSumToFile);
     connect(this, &MainWindow::errorOccured, logger, &Logger::logExceptionToFile);
     connect(snap, &Snapshot::errorOccured, logger, &Logger::logExceptionToFile);
+    connect(this, &MainWindow::errorSqlOccured, logger, &Logger::logSqlErrorToFile);
 
     // ---------------------- Snapshot -----------------------------------------
     // Коннектим завершение потока с планированием удаления снапшота
@@ -130,8 +131,7 @@ MainWindow::MainWindow(QWidget *parent)
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("./testDB.db");
     // Проверяем успешность открытия БД
-    if (db.open()) qDebug("DB opened");
-    else qDebug("DB open error!!");
+    if (!db.open()) emit errorSqlOccured(db.lastError());
 
     // Если в БД нет таблицы с инфой о снапшотах, то создаем её
     query = new QSqlQuery(db);
@@ -272,6 +272,8 @@ MainWindow::~MainWindow()
     rtw_thread.quit();
     rtw_thread.wait();
     delete compare_window;
+    delete SQLmodel;
+    delete query;
 }
 
 void MainWindow::on_info_message_triggered() const
@@ -513,3 +515,12 @@ void MainWindow::showEvent(QShowEvent *event)
 {
     emit showed();
 }
+
+void MainWindow::on_drop_db_action_triggered()
+{
+    // delete query;
+    // query = new QSqlQuery(db);
+    query->exec("DELETE FROM Snaps;");
+    // query;
+}
+

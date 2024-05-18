@@ -41,3 +41,28 @@ void Logger::logExceptionToFile(const std::exception &e, const QString &file_pat
     out << QDateTime::currentDateTime().toString() << " " << file_path << ": " << e.what() << '\n';
     file.close();
 }
+
+void Logger::logSqlErrorToFile(const QSqlError &e) {
+    QFile file("log.txt");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Append)) return;
+    QTextStream out(&file);
+    QString error_str;
+    switch(e.type()) {
+    case QSqlError::ConnectionError:
+        error_str = "Ошибка подключения к базе данных.";
+        break;
+    case QSqlError::StatementError:
+        error_str = "Ошибка в SQL-запросе.";
+        break;
+    case QSqlError::TransactionError:
+        error_str = "Ошибка транзакции базы данных.";
+        break;
+    case QSqlError::UnknownError:
+        error_str = "Неизвестная ошибка в базе данных.";
+        break;
+    default:
+        break;
+    }
+    out << QDateTime::currentDateTime().toString() << error_str << '\n';
+    file.close();
+}

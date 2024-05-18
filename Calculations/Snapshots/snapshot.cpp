@@ -57,7 +57,7 @@ void Snapshot::writeToFile(QString address)
     if (m_is_dir) tmp.insert("inner_files", m_inner_files);
     //выкидываем в документ
     fileJson.write(QJsonDocument(tmp).toJson());
-    qDebug() << "file has been written" << QFileInfo{fileJson}.absolutePath() << m_size;
+    // qDebug() << "file has been written" << QFileInfo{fileJson}.absolutePath() << m_size;
     fileJson.close();
 }
 
@@ -214,14 +214,14 @@ QJsonArray Snapshot::checkForAltDS(QString filePath, ALG_ID hashAlgorithm)
           {
 
               nameADS = nameADS.section(':', 1, 1).section('$', 0, 0); //возвращаемое имя потока имеет вид ":имя_потока:$DATA", данными функциями вырезаем имя_потока
-              qDebug() << "Имя альтернативного потока: " << nameADS;
+              // qDebug() << "Имя альтернативного потока: " << nameADS;
               obj.insert("alt_name", nameADS);
               LARGE_INTEGER streamSize = findStreamData.StreamSize;
-              qDebug() << "Размер альтернативного потока: " << streamSize.QuadPart << " байт";
+              // qDebug() << "Размер альтернативного потока: " << streamSize.QuadPart << " байт";
               obj.insert("alt_size", streamSize.QuadPart);
               // Вычисление контрольной суммы ADS
               QString hashSum = m_hash.calculateFileCheckSum(filePath + ':' + nameADS, hashAlgorithm);
-              qDebug() << "Контрольная сумма потока: " << hashSum;
+              // qDebug() << "Контрольная сумма потока: " << hashSum;
               obj.insert("alt_hash_sum", hashSum);
               hasAltDS = true;
           }
@@ -233,7 +233,7 @@ QJsonArray Snapshot::checkForAltDS(QString filePath, ALG_ID hashAlgorithm)
       }
       if (!hasAltDS) {
           return {};
-        qDebug() << "Альтернативные потоки не найдены.";
+        // qDebug() << "Альтернативные потоки не найдены.";
       }
       return result;
 }
@@ -260,17 +260,17 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
        auto tlp = first_result.keys();
        auto key = tlp.begin();
        // сравнение старого снапшота с новым
-       qDebug() << "here";
+       // qDebug() << "here";
        while(!first_result.empty())
            {
-           qDebug() << *key;
+           // qDebug() << *key;
            // смотрим, различаются ли альт.потоки
                if (first_result[*key].second != second_result[*key].second)
                    {
                       QList<QString> kil = first_result[*key].second.keys();
                       QList<QString> s_kil = second_result[*key].second.keys();
-                      qDebug() << kil;
-                      qDebug() << s_kil;
+                      // qDebug() << kil;
+                      // qDebug() << s_kil;
                       if (kil.empty() and s_kil.empty())
                       {
                           first_result.remove(*key);
@@ -288,11 +288,11 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
                       }
                       while(!first_result[*key].second.empty())
                       {
-                          qDebug() << "here 123";
+                          // qDebug() << "here 123";
                            // если альтпотока с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
                           if(second_result[*key].second.find(*alt_key) == second_result[*key].second.end())
                           {
-                              qDebug() << "Роберт Полсон" << *alt_key;
+                              // qDebug() << "Роберт Полсон" << *alt_key;
                               result.push_back({*key, deleted, true, *alt_key});
                               first_result[*key].second.remove(*alt_key);
                               alt_key++;
@@ -341,10 +341,10 @@ QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
            second_result.remove(*s_key);
            s_key++;
        }
-       for(int i =0; i< result.size(); i++)
-       {
-           qDebug() << result.at(i).path << result.at(i).flag << result.at(i).isAlt << result.at(i).alt_name;
-       }
+       // for(int i =0; i< result.size(); i++)
+       // {
+       //     qDebug() << result.at(i).path << result.at(i).flag << result.at(i).isAlt << result.at(i).alt_name;
+       // }
        // возвращаем вектор пар, хранящих отличия первой директории от второй.
        return result;
 }

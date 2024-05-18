@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QFile>
 #include <QDateTime>
+#include <QSqlError>
 #include "../Calculations/Hash Sum/HashSum.h"
 
 class Logger : public QObject
@@ -17,6 +18,7 @@ public:
 public slots:
     static void logHashSumToFile(const HashSumErrors &error, const QString &file_path);
     static void logExceptionToFile(const std::exception &e, const QString &file_path);
+    static void logSqlErrorToFile(const QSqlError &e);
 
 };
 

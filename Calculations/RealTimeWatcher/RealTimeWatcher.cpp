@@ -27,11 +27,17 @@ void RealTimeWatcher::watch()
 
     uint8_t change_buf[1024];
     BOOL success = ReadDirectoryChangesW(
-        file, change_buf, 1024, TRUE,
-        FILE_NOTIFY_CHANGE_FILE_NAME |
-        FILE_NOTIFY_CHANGE_DIR_NAME |
-        FILE_NOTIFY_CHANGE_LAST_WRITE,
-        NULL, &overlapped, NULL);
+                file,                                              // Дескриптор открываемой директории
+                change_buf,                                        // Буфер для хранения изменений
+                1024,                                   // Размер буфера
+                FALSE,                                             // Мониторим также поддиректории
+                FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES |
+                FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION |
+                FILE_NOTIFY_CHANGE_SECURITY,                      // Типы изменений, которые мониторятся
+                NULL,                                   // Количество прочитанных байт
+                &overlapped,                                             // Перекрытие, не используется
+                NULL                                              // Коллбэк, не используется
+            );
 
     //qDebug() << "watching";
     //out->clear();
@@ -53,52 +59,63 @@ void RealTimeWatcher::watch()
 
                 size_t name_len = event->FileNameLength / sizeof(WCHAR);
                 QString file_name = QString::fromWCharArray(event->FileName, name_len);
-
+                //<font color=#ff0000>
                 switch (event->Action) {
                 case FILE_ACTION_ADDED: {
                     //qDebug() << "added";
                     //wprintf(L"       Added: %.*s\n", name_len, event->FileName);
-                    out->insertHtml(QString("<font face=»Arial»>"
+                    out->insertHtml(QString("<font face=«Arial», color=#008000>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "Added: %1<br>").arg(file_name));
+                                            "&nbsp;"
+                                            "Добавлен: %1 </font><br>").arg(file_name));
+                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_REMOVED: {
                     //qDebug() << "removed";
                     //wprintf(L"     Removed: %.*s\n", name_len, event->FileName);
-                    out->insertHtml(QString("<font face=»Arial»>"
+                    out->insertHtml(QString("<font face=«Arial», color=#ff0000>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "Removed: %1<br>").arg(file_name));
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "Удален: %1</font><br>").arg(file_name));
+                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_MODIFIED: {
                     //qDebug() << "Modified";
                     //wprintf(L"    Modified: %.*s\n", name_len, event->FileName);
-                    out->insertHtml(QString("<font face=»Arial»>"
+                    out->insertHtml(QString("<font face=«Arial», color=#ffa500>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "&nbsp;Modified: %1<br>").arg(file_name));
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "Изменен: %1</font><br>").arg(file_name));
+                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_RENAMED_OLD_NAME: {
                     //qDebug() << "Renamed";
                     //wprintf(L"Renamed from: %.*s\n", name_len, event->FileName);
-                    out->insertHtml(QString("<font face=»Arial»>"
-                                            "Renamed from: %1<br>").arg(file_name));
+                    out->insertHtml(QString("<font face=«Arial», color=#ffa500>"
+                                            "Переименован из: %1</font><br>").arg(file_name));
+                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_RENAMED_NEW_NAME: {
                     //qDebug() << "to";
                     //wprintf(L"          to: %.*s\n", name_len, event->FileName);
-                    out->insertHtml(QString("<font face=»Arial»>"
+                    out->insertHtml(QString("<font face=«Arial», color=#ffa500>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "&nbsp;&nbsp;to: %1<br>").arg(file_name));
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;в: %1</font><br>").arg(file_name));
+                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 default: {
@@ -116,22 +133,36 @@ void RealTimeWatcher::watch()
                 }
             }
 
+
+
+
             // Queue the next event
             BOOL success = ReadDirectoryChangesW(
-                file, change_buf, 1024, TRUE,
-                FILE_NOTIFY_CHANGE_FILE_NAME |
-                FILE_NOTIFY_CHANGE_DIR_NAME |
-                FILE_NOTIFY_CHANGE_LAST_WRITE,
-                NULL, &overlapped, NULL);
+                        file,                                              // Дескриптор открываемой директории
+                        change_buf,                                        // Буфер для хранения изменений
+                        1024,                                   // Размер буфера
+                        FALSE,                                             // Мониторим также поддиректории
+                        FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES |
+                        FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION |
+                        FILE_NOTIFY_CHANGE_SECURITY,                      // Типы изменений, которые мониторятся
+                        NULL,                                   // Количество прочитанных байт
+                        &overlapped,                                             // Перекрытие, не используется
+                        NULL                                              // Коллбэк, не используется
+                    );
 
         }
 
         // Do other loop stuff here...
         // При смене директории выходим из функции
         if (q_dir_path != this->dir->rootDirectory().absolutePath()){
+            // out->clear();
             //qDebug() << "Конец слежки, папка изменилась";
-            out->insertHtml(QString("<font face=»Arial»>"
-                                    "Dir changed! <br><br><br>"));
+
+            out->insertHtml(QString("<font face=«Arial»>"
+                                    "Отслеживаемая директория изменена на ") +
+                            this->dir->rootDirectory().absolutePath() +
+                            QString(" </font><br><br><br>"));
+            // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
             return;
         }
 
