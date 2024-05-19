@@ -68,8 +68,8 @@ void RealTimeWatcher::watch()
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "&nbsp;"
-                                            "Добавлен: %1 </font><br>").arg(file_name));
+                                            "&nbsp;&nbsp;"
+                                            "<b>Добавлен:</b></font> %1 <br>").arg(file_name));
                     // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
@@ -80,8 +80,9 @@ void RealTimeWatcher::watch()
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "Удален: %1</font><br>").arg(file_name));
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;"
+                                            "<b>Удален:</b></font> %1<br>").arg(file_name));
                     // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
@@ -93,7 +94,7 @@ void RealTimeWatcher::watch()
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "Изменен: %1</font><br>").arg(file_name));
+                                            "<b>Изменен:</b></font> %1<br>").arg(file_name));
                     // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
@@ -101,7 +102,7 @@ void RealTimeWatcher::watch()
                     //qDebug() << "Renamed";
                     //wprintf(L"Renamed from: %.*s\n", name_len, event->FileName);
                     out->insertHtml(QString("<font face=«Arial», color=#ffa500>"
-                                            "Переименован из: %1</font><br>").arg(file_name));
+                                            "<b>Переименован из:</b></font> %1<br>").arg(file_name));
                     // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
@@ -114,7 +115,9 @@ void RealTimeWatcher::watch()
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
-                                            "&nbsp;&nbsp;&nbsp;&nbsp;в: %1</font><br>").arg(file_name));
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;&nbsp;&nbsp;&nbsp;"
+                                            "&nbsp;<b>в:</b></font> %1<br>").arg(file_name));
                     // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
