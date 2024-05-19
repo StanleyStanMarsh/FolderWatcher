@@ -35,6 +35,7 @@
 #include "../Logger/Logger.h"
 #include "../Calculations/Snapshots/snapshot.h"
 #include "../Compare Window/CompareWindow.h"
+#include "../Calculations/RealTimeWatcher/RealTimeWatcher.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -180,6 +181,8 @@ private slots:
 
     void on_action_load_snap_triggered();
 
+    void on_drop_db_action_triggered();
+
 signals:
 
     /**
@@ -202,6 +205,10 @@ signals:
                         const ALG_ID hash_algorithm, const QDateTime current_time);
 
     void errorOccured(const std::exception &e, const QString &file_path);
+
+    void errorSqlOccured(const QSqlError &e);
+
+    [[maybe_unused]] void showed();
 
 private:
     /**
@@ -236,6 +243,15 @@ private:
      */
     bool createDirectory(const QString &path);
 
+    /**
+     * Функция для создания директории под снапшоты
+     *
+     * @param filePath - путь до нужной директории
+     * @param hashAlgorithm - алгоритм
+     * @return QString - все альт.потоки через запятую
+     */
+    QString checkForAltDS(QString filePath);
+
     /// Графическая форма окна
     Ui::MainWindow *ui;
 
@@ -252,6 +268,9 @@ private:
 
     /// Отдельный поток для снапшотов
     QThread snapshot_thread;
+
+    /// Отдельный поток для слежения за изменениями в директории
+    QThread rtw_thread;
 
     /// Окно сравнения снапшотов
     CompareWindow *compare_window;
@@ -272,5 +291,9 @@ private:
     QSqlDatabase db;
     QSqlQuery *query;
     QSqlTableModel *SQLmodel;
+
+protected:
+    void showEvent(QShowEvent *event) override;
+
 };
 #endif // MAINWINDOW_H

@@ -57,7 +57,7 @@ void Snapshot::writeToFile(QString address)
     if (m_is_dir) tmp.insert("inner_files", m_inner_files);
     //выкидываем в документ
     fileJson.write(QJsonDocument(tmp).toJson());
-    qDebug() << "file has been written" << QFileInfo{fileJson}.absolutePath() << m_size;
+    // qDebug() << "file has been written" << QFileInfo{fileJson}.absolutePath() << m_size;
     fileJson.close();
 }
 
@@ -214,14 +214,14 @@ QJsonArray Snapshot::checkForAltDS(QString filePath, ALG_ID hashAlgorithm)
           {
 
               nameADS = nameADS.section(':', 1, 1).section('$', 0, 0); //возвращаемое имя потока имеет вид ":имя_потока:$DATA", данными функциями вырезаем имя_потока
-              qDebug() << "Имя альтернативного потока: " << nameADS;
+              // qDebug() << "Имя альтернативного потока: " << nameADS;
               obj.insert("alt_name", nameADS);
               LARGE_INTEGER streamSize = findStreamData.StreamSize;
-              qDebug() << "Размер альтернативного потока: " << streamSize.QuadPart << " байт";
+              // qDebug() << "Размер альтернативного потока: " << streamSize.QuadPart << " байт";
               obj.insert("alt_size", streamSize.QuadPart);
               // Вычисление контрольной суммы ADS
               QString hashSum = m_hash.calculateFileCheckSum(filePath + ':' + nameADS, hashAlgorithm);
-              qDebug() << "Контрольная сумма потока: " << hashSum;
+              // qDebug() << "Контрольная сумма потока: " << hashSum;
               obj.insert("alt_hash_sum", hashSum);
               hasAltDS = true;
           }
@@ -233,7 +233,7 @@ QJsonArray Snapshot::checkForAltDS(QString filePath, ALG_ID hashAlgorithm)
       }
       if (!hasAltDS) {
           return {};
-        qDebug() << "Альтернативные потоки не найдены.";
+        // qDebug() << "Альтернативные потоки не найдены.";
       }
       return result;
 }
@@ -241,103 +241,112 @@ QJsonArray Snapshot::checkForAltDS(QString filePath, ALG_ID hashAlgorithm)
 QVector<ComparisonAnswer> Snapshot::compareSnapshots(Snapshot &other)
 {
     // результирующий вектор, содрежит в себе пару элементов: путь, до файла, который был изменен
-    // и флаг изменения ( отредактирован, удален, создан)
-    QVector<ComparisonAnswer> result;
-    // составляем словрарик, в котором ключи - путь до файла/папки из директории
-    // значения - контрольные суммы фалов/папок
-    QMap<QString, QPair<QString, QMap<QString, QString>>> first_result, second_result;
+       // и флаг изменения ( отредактирован, удален, создан)
+       QVector<ComparisonAnswer> result;
+       // составляем словрарик, в котором ключи - путь до файла/папки из директории
+       // значения - контрольные суммы фалов/папок
+       QMap<QString, QPair<QString, QMap<QString, QString>>> first_result, second_result;
 
-    // создаем словарик всех файлов в двух директориях
-    for(auto it = m_inner_files.begin(); it!=m_inner_files.end(); ++it)
-    {
-         createCompareMap(it->toObject(),m_name, first_result);
-    }
-    for(auto other_it = other.m_inner_files.begin(); other_it != other.m_inner_files.end(); ++other_it)
-    {
-         createCompareMap(other_it->toObject(),m_name, second_result);
-    }
-    //qDebug() << first_result;
-    QList<QString> first_keys_list = first_result.keys();
-    auto key = first_keys_list.begin();
-    // сравнение старого снапшота с новым
-    while(!first_result.empty())
-        {
-        // если элемента с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
-        if(second_result.find(*key) == second_result.end())
-        {
-            result.push_back({*key, deleted,false, ""});
-            first_result.remove(*key);
-            key++;
-            continue;
-        }
-        // смотрим, различаются ли альт.потоки
-        if (first_result[*key].second != second_result[*key].second)
-        {
-            QList<QString> kil = first_result[*key].second.keys();
-            QList<QString> s_kil = second_result[*key].second.keys();
-            qDebug() << kil;
-            qDebug() << s_kil;
-            if (kil.empty() and s_kil.empty())
-            {
-                first_result.remove(*key);
-                key++;
-                continue;
-            }
-            //qDebug() << *s_kil.begin();
-            QList<QString>::iterator alt_key;
-            QList<QString>::iterator alt_s_key;
-            //такой же обход как и для обычных файлов.
-            while(!first_result[*key].second.empty())
-            {
-                alt_key = kil.begin();
-                qDebug() << "here 123";
-                // если альтпотока с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
-                if(second_result[*key].second.find(*alt_key) == second_result[*key].second.end())
-                {
+       // создаем словарик всех файлов в двух директориях
+       for(auto it = m_inner_files.begin(); it!=m_inner_files.end(); ++it)
+       {
+            createCompareMap(it->toObject(),m_name, first_result);
+       }
+       for(auto other_it = other.m_inner_files.begin(); other_it != other.m_inner_files.end(); ++other_it)
+       {
+            createCompareMap(other_it->toObject(),m_name, second_result);
+       }
+       //qDebug() << first_result;
+       auto tlp = first_result.keys();
+       auto key = tlp.begin();
+       // сравнение старого снапшота с новым
+       // qDebug() << "here";
+       while(!first_result.empty())
+           {
+           // qDebug() << *key;
+           // смотрим, различаются ли альт.потоки
+               if (first_result[*key].second != second_result[*key].second)
+                   {
+                      QList<QString> kil = first_result[*key].second.keys();
+                      QList<QString> s_kil = second_result[*key].second.keys();
+                      // qDebug() << kil;
+                      // qDebug() << s_kil;
+                      if (kil.empty() and s_kil.empty())
+                      {
+                          first_result.remove(*key);
+                          key++;
+                          continue;
+                      }
 
-                    result.push_back({*key, deleted, true, *alt_key});
-                    first_result[*key].second.remove(*alt_key);
-                    alt_key++;
-                    continue;
-                }
-                // если контрольные суммы альтпотоков в одном адресе не равны, значит файл был именен
-                else if (first_result[*key].second[*alt_key] != second_result[*key].second[*alt_key])
-                {
-                    result.push_back({*key,edited, true, *alt_key});
-                }
-                first_result[*key].second.remove(*alt_key);
-                second_result[*key].second.remove(*alt_key);
-                alt_key++;
-            }
-            // если во втором векторе остались значения, значит они новые.
-            // auto alt_s_key = second_result[*key].second.keys().begin();
-            alt_s_key = s_kil.begin();
-            while(!second_result[*key].second.empty())
-            {
-                result.push_back({*key, appeared, true, *alt_s_key});
-                second_result[*key].second.remove(*alt_s_key);
-                alt_s_key++;
-            }
-        }
-
-        // если контрольные суммы файлов/папок в одном адресе не равны, значит файл был именен
-        if (first_result[*key].first != second_result[*key].first) result.push_back({*key,edited, false, ""});
-        first_result.remove(*key);
-        second_result.remove(*key);
-        key++;
-    }
-    // если после проходки по всем файлам первого снапшота, остались файлы во втором, значит
-    // они были добавлены
-    QList<QString> second_keys_list = second_result.keys();
-    auto s_key = second_keys_list.begin();
-    while(!second_result.empty())
-    {
-        result.push_back({*s_key, appeared, false, ""});
-        second_result.remove(*s_key);
-        s_key++;
-    }
-    // возвращаем вектор пар, хранящих отличия первой директории от второй.
-    return result;
+                      // qDebug() << *s_kil.begin();
+                       QList<QString>::iterator alt_key;
+                       QList<QString>::iterator alt_s_key;
+                      //такой же обход как и для обычных файлов.
+                      if (!first_result[*key].second.empty())
+                      {
+                          alt_key = kil.begin();
+                      }
+                      while(!first_result[*key].second.empty())
+                      {
+                          // qDebug() << "here 123";
+                           // если альтпотока с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
+                          if(second_result[*key].second.find(*alt_key) == second_result[*key].second.end())
+                          {
+                              // qDebug() << "Роберт Полсон" << *alt_key;
+                              result.push_back({*key, deleted, true, *alt_key});
+                              first_result[*key].second.remove(*alt_key);
+                              alt_key++;
+                              continue;
+                          }
+                          // если контрольные суммы альтпотоков в одном адресе не равны, значит файл был именен
+                          else if (first_result[*key].second[*alt_key] != second_result[*key].second[*alt_key])
+                          {
+                              result.push_back({*key,edited, true, *alt_key});
+                          }
+                          first_result[*key].second.remove(*alt_key);
+                          second_result[*key].second.remove(*alt_key);
+                          alt_key++;
+                      }
+                      // если во втором векторе остались значения, значит они новые.
+                     // auto alt_s_key = second_result[*key].second.keys().begin();
+                      if(!second_result[*key].second.empty()) alt_s_key = s_kil.begin();
+                      while(!second_result[*key].second.empty())
+                      {
+                          result.push_back({*key, appeared, true, *alt_s_key});
+                          second_result[*key].second.remove(*alt_s_key);
+                          alt_s_key++;
+                      }
+                   }
+           // если элемента с таким же ключом как в исходном снапшоте нет в новой, значит он удален.
+           if(second_result.find(*key) == second_result.end())
+           {
+               result.push_back({*key, deleted,false, ""});
+               first_result.remove(*key);
+               key++;
+               continue;
+           }
+           // если контрольные суммы файлов/папок в одном адресе не равны, значит файл был именен
+           if (first_result[*key].first != second_result[*key].first) result.push_back({*key,edited, false, ""});
+           first_result.remove(*key);
+           second_result.remove(*key);
+           key++;
+       }
+       // если после проходки по всем файлам первого снапшота, остались файлы во втором, значит
+       // они были добавлены
+       auto s_key1 = second_result.keys();
+       auto s_key = s_key1.begin();
+       while(!second_result.empty())
+       {
+           result.push_back({*s_key, appeared, false, ""});
+           second_result.remove(*s_key);
+           s_key++;
+       }
+       // for(int i =0; i< result.size(); i++)
+       // {
+       //     qDebug() << result.at(i).path << result.at(i).flag << result.at(i).isAlt << result.at(i).alt_name;
+       // }
+       // возвращаем вектор пар, хранящих отличия первой директории от второй.
+       return result;
 }
 
 QMap<QString, QPair<QString, QMap<QString, QString>>> Snapshot::createCompareMap (QJsonObject obj, QString& parent_dir, QMap<QString, QPair<QString, QMap<QString, QString>>>& result)

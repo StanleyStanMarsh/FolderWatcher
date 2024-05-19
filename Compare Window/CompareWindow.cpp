@@ -120,7 +120,7 @@ void CompareWindow::compareSnapshots(){
     if (right_index == -1) return;
 
     // Начало сравнения, очищаем окно вывода
-    qDebug() << "\nCompare start";
+    // qDebug() << "\nCompare start";
     ui->comparison_output->clear();
 
     // получаем из БД выбранные пути

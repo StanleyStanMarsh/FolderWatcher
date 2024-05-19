@@ -57,6 +57,10 @@ MainWindow::MainWindow(QWidget *parent)
     loading_window = new LoadingWindow();
     loading_window->hide();
 
+    // Создаем отслеживатель
+    RealTimeWatcher *rtw = new RealTimeWatcher(dir, ui->realTimeLog);
+    rtw->moveToThread(&rtw_thread);
+
     // Коннектим нажатие на кнопки подсчета КС к слоту-отправителю сигнала с данными о выделенных
     // файлах и папках
     connect(ui->actionSHA_256, &QAction::triggered, this, &MainWindow::chooseSHA_256);
@@ -78,6 +82,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(calculator, &HashSum::errorOccured, logger, &Logger::logHashSumToFile);
     connect(this, &MainWindow::errorOccured, logger, &Logger::logExceptionToFile);
     connect(snap, &Snapshot::errorOccured, logger, &Logger::logExceptionToFile);
+    connect(this, &MainWindow::errorSqlOccured, logger, &Logger::logSqlErrorToFile);
 
     // ---------------------- Snapshot -----------------------------------------
     // Коннектим завершение потока с планированием удаления снапшота
@@ -92,11 +97,23 @@ MainWindow::MainWindow(QWidget *parent)
     // // Коннектим сигнал об ошибках со сбором ошибок
     // connect(calculator, &HashSum::errorOccured, this, &MainWindow::handleHashSumErrors);
 
+
+    // ---------------------- Real Time Watcher --------------------------------
+    // Коннектим завершение потока с планированием удаления отслеживателя
+    connect(&rtw_thread, &QThread::finished, rtw, &QObject::deleteLater);
+    // Коннектим изменение корневого пути с изменением отслеживаемой директории
+    // connect(this->dir, &QFileSystemModel::rootPathChanged, rtw, &RealTimeWatcher::changeDir);
+    //
+    connect(this, &MainWindow::showed, rtw, &RealTimeWatcher::watch);
+    connect(dir, &QFileSystemModel::rootPathChanged, rtw, &RealTimeWatcher::watch);
+
     hash_sum_thread.start();
 
     logger_thread.start();
 
     snapshot_thread.start();
+
+    rtw_thread.start();
 
     // ------------------- Кнопки, вьюшки и тд. -------------------------------------
     // Коннектим двойное нажатие по папке/файлу к его открытию
@@ -114,8 +131,7 @@ MainWindow::MainWindow(QWidget *parent)
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("./testDB.db");
     // Проверяем успешность открытия БД
-    if (db.open()) qDebug("DB opened");
-    else qDebug("DB open error!!");
+    if (!db.open()) emit errorSqlOccured(db.lastError());
 
     // Если в БД нет таблицы с инфой о снапшотах, то создаем её
     query = new QSqlQuery(db);
@@ -171,8 +187,8 @@ void MainWindow::showMainInfo() {
     info->clear();
 
     // установка названий столбцов
-    info->setColumnCount(4);
-    info->setHorizontalHeaderLabels(QStringList{"name", "date", "type", "size"});
+    info->setColumnCount(5);
+    info->setHorizontalHeaderLabels(QStringList{"name", "date", "type", "size", "alt"});
 
     // Получаем индекс текущей директории и количество файлов в директории
     QModelIndex currentDirIndex = dir->index(dir->rootPath());
@@ -229,6 +245,11 @@ void MainWindow::showMainInfo() {
                 row << new QStandardItem("");
         }
 
+        // Получаем названия альтернативных потоков
+        QString alt = "Нет альт.потоков";
+        alt = checkForAltDS(dir->filePath(fileIndex));
+        row << new QStandardItem(alt);
+
         info->appendRow(row);
     }
     ui->info_label->setStyleSheet("color: rgb(0, 0, 0)");
@@ -248,7 +269,11 @@ MainWindow::~MainWindow()
     logger_thread.wait();
     snapshot_thread.quit();
     snapshot_thread.wait();
+    rtw_thread.quit();
+    rtw_thread.wait();
     delete compare_window;
+    delete SQLmodel;
+    delete query;
 }
 
 void MainWindow::on_info_message_triggered() const
@@ -449,5 +474,53 @@ void MainWindow::on_action_load_snap_triggered()
     compare_window->updateDirectoriesList();
     compare_window->show();
     this->close();
+}
+
+QString MainWindow::checkForAltDS(QString filePath) {
+    QString alts = "";
+
+    WIN32_FIND_STREAM_DATA findStreamData; //cтруктура с информацией о потоке
+
+    LPCWSTR filePathWin = reinterpret_cast<LPCWSTR>(filePath.utf16()); //приводим путь к формату win api LPCWSTR
+
+    bool hasAltDS = false; //флаг наличия у файла/директории потока, кроме главного (наличие альт потоков)
+
+    HANDLE hFind = FindFirstStreamW(filePathWin, FindStreamInfoStandard, &findStreamData, 0);
+
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            QString nameADS = QString::fromWCharArray(findStreamData.cStreamName); // получаем название альт потока
+            if (nameADS != "::$DATA")
+            {
+                nameADS = nameADS.section(':', 1, 1).section('$', 0, 0); //возвращаемое имя потока имеет вид ":имя_потока:$DATA", данными функциями вырезаем имя_потока
+                alts += nameADS + ", ";
+                hasAltDS = true;
+            }
+
+        } while (FindNextStreamW(hFind, &findStreamData));
+
+        FindClose(hFind);
+    }
+    if (!hasAltDS) {
+        alts = "Нет альт.потоков  ";
+    }
+
+    alts.removeLast();
+    alts.removeLast();
+
+    return alts;
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    emit showed();
+}
+
+void MainWindow::on_drop_db_action_triggered()
+{
+    // delete query;
+    // query = new QSqlQuery(db);
+    query->exec("DELETE FROM Snaps;");
+    // query;
 }
 
