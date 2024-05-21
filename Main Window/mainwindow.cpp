@@ -129,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // --------------------------- Настройка БД ------------------------------------
     db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("./testDB.db");
+    db.setDatabaseName("testDB.db");
     // Проверяем успешность открытия БД
     if (!db.open()) emit errorSqlOccured(db.lastError());
 
