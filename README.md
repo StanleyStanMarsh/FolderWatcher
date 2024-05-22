@@ -23,7 +23,14 @@ FolderWatcher - это программное обеспечение для ср
 - Времена создания, последнего изменения и доступа к файлам/директориям
 
 ## Разработка
-Программа разработана на Qt C++, использует [Qt](https://doc.qt.io/) версии 6 и среду разработки Qt Creator. Сборка проекта осуществляется с помощью qmake. Код включает в себя основной класс главного окна [MainWindow](https://github.com/StanleyStanMarsh/FolderWatcher/blob/master/Main%20Window/mainwindow.h), наследующийся от QMainWindow, и класс [HashSum](https://github.com/StanleyStanMarsh/FolderWatcher/blob/master/Calculations/Hash%20Sum/HashSum.h) для вычисления контрольных сумм файлов и папок, использующий [Win32 API](https://learn.microsoft.com/en-us/windows/win32/api/) и являющийся производным от QObject. Методы экземпляров классов HashSum и RealTimeWatcher запускаются в отдельном [потоке](https://github.com/StanleyStanMarsh/FolderWatcher/commit/9d801ad8192f70f4f61bdf309f03a8ef477ae9a3) для оптимизации производительности.
+Программа разработана на Qt C++, использует [Qt](https://doc.qt.io/) версии 6 и среду разработки Qt Creator. Сборка проекта осуществляется с помощью qmake. Реализация включает в себя:
+- основной класс главного окна [MainWindow](https://github.com/StanleyStanMarsh/FolderWatcher/blob/master/Main%20Window), наследующийся от QMainWindow;
+- класс окна сравнений снапшотов [CompareWindow](https://github.com/StanleyStanMarsh/FolderWatcher/tree/master/Compare%20Window), наследующийся от QWidget;
+- класс окна загрузки [LoadingWindow](https://github.com/StanleyStanMarsh/FolderWatcher/tree/master/Loading%20Window), наследующийся от QMessageBox;
+- класс [HashSum](https://github.com/StanleyStanMarsh/FolderWatcher/blob/master/Calculations/Hash%20Sum/HashSum.h) для вычисления контрольных сумм файлов и папок, использующий [WinAPI](https://learn.microsoft.com/en-us/windows/win32/api/) и являющийся производным от QObject;
+- класс [RealTimeWatcher](https://github.com/StanleyStanMarsh/FolderWatcher/tree/master/Calculations/RealTimeWatcher) для отслеживания изменений в директориях в реальном времени, который так же использует функционал [WinAPI](https://learn.microsoft.com/en-us/windows/win32/api/) и наследуется от QObject;
+- класс [Snapshots](https://github.com/StanleyStanMarsh/FolderWatcher/tree/master/Calculations/Snapshots) для создания и сравнения снапщотов (слепков) директорий, который является производным так же от QObject.
+Методы экземпляров классов HashSum и RealTimeWatcher запускаются в отдельных [потоках](https://doc.qt.io/qt-6/qthread.html) для оптимизации производительности и исключения зависания главного окна.
 
 ## Установка (Windows)
 
@@ -38,7 +45,7 @@ FolderWatcher - это программное обеспечение для ср
 |----------|-----------------------------------------------------------------|
 | docs	   | Обновление документации                                         |
 | feat	   | Добавление нового функционала                                   |
-| fix	   | Исправление ошибок                                              |
+| fix	     | Исправление ошибок                                              |
 | refactor | Правки кода без исправления ошибок или добавления новых функций |
 | revert   | Откат на предыдущие коммиты                                     |
 | style	   | Правки по кодстайлу (табы, отступы, точки, запятые и т.д.)      |
