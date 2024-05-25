@@ -287,10 +287,17 @@ private:
     /// Лог для сбора ошибок при подсчете КС
     QString hash_sum_log;
 
-    /// Работа с БД
+    /// БД
     QSqlDatabase db;
+
+    /// SQL запрос
     QSqlQuery *query;
+
+    /// Модель БД
     QSqlTableModel *SQLmodel;
+
+    /// Флаг открытого окна
+    bool *opened;
 
 protected:
     void showEvent(QShowEvent *event) override;

@@ -7,6 +7,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    opened = new bool(true);
+
     this->setWindowTitle("Folder Watcher");
 
     // -------------------- Настройка модели работы с директориями ----------------
@@ -58,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
     loading_window->hide();
 
     // Создаем отслеживатель
-    RealTimeWatcher *rtw = new RealTimeWatcher(dir, ui->realTimeLog);
+    RealTimeWatcher *rtw = new RealTimeWatcher(dir, ui->realTimeLog, opened);
     rtw->moveToThread(&rtw_thread);
 
     // Коннектим нажатие на кнопки подсчета КС к слоту-отправителю сигнала с данными о выделенных
@@ -131,19 +133,24 @@ MainWindow::MainWindow(QWidget *parent)
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("testDB.db");
     // Проверяем успешность открытия БД
-    if (!db.open()) emit errorSqlOccured(db.lastError());
+    Logger::checkSqlError(db.lastError());
 
     // Если в БД нет таблицы с инфой о снапшотах, то создаем её
     query = new QSqlQuery(db);
     //query->exec("DROP TABLE IF EXISTS Snaps;");
     query->exec("CREATE TABLE IF NOT EXISTS Snaps(DirectoryPath TEXT, SnapshotPath TEXT, SaveDate DATE);");
-
+    Logger::checkSqlError(query->lastError());
     // Задаем Qt модель для работы
     SQLmodel = new QSqlTableModel(this, db);
+    Logger::checkSqlError(SQLmodel->lastError());
     SQLmodel->setTable("Snaps");
+    Logger::checkSqlError(SQLmodel->lastError());
     SQLmodel->select();
+    Logger::checkSqlError(SQLmodel->lastError());
     SQLmodel->submitAll();
+    Logger::checkSqlError(SQLmodel->lastError());
     SQLmodel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    Logger::checkSqlError(SQLmodel->lastError());
     // ui->tableView->setModel(SQLmodel);
 
     // Создаем директорию под снапшоты
@@ -258,6 +265,9 @@ void MainWindow::showMainInfo() {
 
 MainWindow::~MainWindow()
 {
+    *opened = false;
+    rtw_thread.quit();
+    rtw_thread.wait();
     delete dir;
     delete info;
     delete ui;
@@ -269,11 +279,11 @@ MainWindow::~MainWindow()
     logger_thread.wait();
     snapshot_thread.quit();
     snapshot_thread.wait();
-    rtw_thread.quit();
-    rtw_thread.wait();
+
     delete compare_window;
     delete SQLmodel;
     delete query;
+    delete opened;
 }
 
 void MainWindow::on_info_message_triggered() const
@@ -521,6 +531,7 @@ void MainWindow::on_drop_db_action_triggered()
     // delete query;
     // query = new QSqlQuery(db);
     query->exec("DELETE FROM Snaps;");
+    Logger::checkSqlError(query->lastError());
     // query;
 }
 

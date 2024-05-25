@@ -66,3 +66,8 @@ void Logger::logSqlErrorToFile(const QSqlError &e) {
     out << QDateTime::currentDateTime().toString() << error_str << '\n';
     file.close();
 }
+
+void Logger::checkSqlError(const QSqlError &error)
+{
+    if (error.type() != QSqlError::NoError) logSqlErrorToFile(error);
+}

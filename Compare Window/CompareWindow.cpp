@@ -39,6 +39,7 @@ CompareWindow::CompareWindow(QSqlTableModel *SQLmodel, QWidget *parent)
 
 void CompareWindow::closeEvent(QCloseEvent *event) {
     SQLmodel->setFilter("");
+    Logger::checkSqlError(SQLmodel->lastError());
     emit closed();
     event->accept();
 }
@@ -50,14 +51,17 @@ void CompareWindow::updateDirectoriesList(){
     ui->dir_box->clear();
     // Смотрим все строки БД
     SQLmodel->setFilter("");
+    Logger::checkSqlError(SQLmodel->lastError());
     // Получим количество строк и номер столбца в модели
     int rows = SQLmodel->rowCount();
+    Logger::checkSqlError(SQLmodel->lastError());
     int column = 0;
 
     // Получаем все уникальные (с помощью QSet) директории из БД
     QSet<QString> uniqueDirs;
     for (int i = 0; i < rows; ++i) {
         QSqlRecord record = SQLmodel->record(i);
+        Logger::checkSqlError(SQLmodel->lastError());
         QString value = record.value(column).toString();
         uniqueDirs.insert(value);
     }
@@ -89,14 +93,17 @@ void CompareWindow::updateSnapshotsList(){
 
     // Смотрим только снапшоты выбранной директории
     SQLmodel->setFilter(QString("DirectoryPath = '%1'").arg(ui->dir_box->currentText()));
+    Logger::checkSqlError(SQLmodel->lastError());
     // Получим количество строк и номер столбца в модели
     int rows = SQLmodel->rowCount();
+    Logger::checkSqlError(SQLmodel->lastError());
     int column = 2;
 
     // Получаем все снапшоты директории из БД
     QStringList snapshots_list;
     for (int i = 0; i < rows; ++i) {
         QSqlRecord record = SQLmodel->record(i);
+        Logger::checkSqlError(SQLmodel->lastError());
         QString value = record.value(column).toDateTime().toString("dd.MM.yyyy, hh:mm:ss");
         snapshots_list << value;
     }
@@ -125,7 +132,9 @@ void CompareWindow::compareSnapshots(){
 
     // получаем из БД выбранные пути
     QString left_path = SQLmodel->record(left_index).value("SnapshotPath").toString();
+    Logger::checkSqlError(SQLmodel->lastError());
     QString right_path = SQLmodel->record(right_index).value("SnapshotPath").toString();
+    Logger::checkSqlError(SQLmodel->lastError());
 
     //qDebug() <<left_path << ' ' << right_path;
 

@@ -1,10 +1,11 @@
 #include "RealTimeWatcher.h"
 
-RealTimeWatcher::RealTimeWatcher(QFileSystemModel *_dir, QTextBrowser *_out, QObject *parent)
+RealTimeWatcher::RealTimeWatcher(QFileSystemModel *_dir, QTextBrowser *_out, bool *_opened, QObject *parent)
     : QObject{parent}
 {
     this->dir = _dir;
     this->out = _out;
+    this->opened = _opened;
 }
 
 void RealTimeWatcher::watch()
@@ -42,8 +43,7 @@ void RealTimeWatcher::watch()
     //qDebug() << "watching";
     //out->clear();
     while (true) {
-
-
+        if (!(*opened)) return;
         if (q_dir_path.isEmpty()) continue;
 
         DWORD result = WaitForSingleObject(overlapped.hEvent, 0);
@@ -56,26 +56,21 @@ void RealTimeWatcher::watch()
             FILE_NOTIFY_INFORMATION* event = (FILE_NOTIFY_INFORMATION*)change_buf;
 
             for (;;) {
+                if (!(*opened)) return;
 
                 size_t name_len = event->FileNameLength / sizeof(WCHAR);
                 QString file_name = QString::fromWCharArray(event->FileName, name_len);
-                //<font color=#ff0000>
                 switch (event->Action) {
                 case FILE_ACTION_ADDED: {
-                    //qDebug() << "added";
-                    //wprintf(L"       Added: %.*s\n", name_len, event->FileName);
                     out->insertHtml(QString("<font face=«Arial», color=#008000>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;"
                                             "<b>Добавлен:</b></font> %1 <br>").arg(file_name));
-                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_REMOVED: {
-                    //qDebug() << "removed";
-                    //wprintf(L"     Removed: %.*s\n", name_len, event->FileName);
                     out->insertHtml(QString("<font face=«Arial», color=#ff0000>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
@@ -83,32 +78,23 @@ void RealTimeWatcher::watch()
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;"
                                             "<b>Удален:</b></font> %1<br>").arg(file_name));
-                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_MODIFIED: {
-                    //qDebug() << "Modified";
-                    //wprintf(L"    Modified: %.*s\n", name_len, event->FileName);
                     out->insertHtml(QString("<font face=«Arial», color=#ffa500>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "<b>Изменен:</b></font> %1<br>").arg(file_name));
-                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_RENAMED_OLD_NAME: {
-                    //qDebug() << "Renamed";
-                    //wprintf(L"Renamed from: %.*s\n", name_len, event->FileName);
                     out->insertHtml(QString("<font face=«Arial», color=#ffa500>"
                                             "<b>Переименован из:</b></font> %1<br>").arg(file_name));
-                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 case FILE_ACTION_RENAMED_NEW_NAME: {
-                    //qDebug() << "to";
-                    //wprintf(L"          to: %.*s\n", name_len, event->FileName);
                     out->insertHtml(QString("<font face=«Arial», color=#ffa500>"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
@@ -118,12 +104,10 @@ void RealTimeWatcher::watch()
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;&nbsp;&nbsp;&nbsp;"
                                             "&nbsp;<b>в:</b></font> %1<br>").arg(file_name));
-                    // out->verticalScrollBar()->setValue( out->verticalScrollBar()->maximum() );
                 } break;
 
                 default: {
                     qDebug() << "unknown action";
-                    //printf("Unknown action!\n");
                 } break;
                 }
 
@@ -154,8 +138,7 @@ void RealTimeWatcher::watch()
                     );
 
         }
-
-        // Do other loop stuff here...
+        if (!(*opened)) return;
         // При смене директории выходим из функции
         if (q_dir_path != this->dir->rootDirectory().absolutePath()){
             // out->clear();

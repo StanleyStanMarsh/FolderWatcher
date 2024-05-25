@@ -10,6 +10,7 @@
 #include <QDateTime>
 
 #include "../Calculations/Snapshots/snapshot.h"
+#include "../Logger/Logger.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CompareWindow; }
@@ -22,7 +23,7 @@ public:
     explicit CompareWindow(QSqlTableModel *SQLmodel, QWidget *parent = nullptr);
 
     /**
-     * Функия для принятия пути до папки от главного окна, для которой будет производиться сравнение снапшотов
+     * Функция для принятия пути до папки от главного окна, для которой будет производиться сравнение снапшотов
      *
      * @param dir_path Путь до папки
      */
@@ -36,6 +37,7 @@ public:
      */
     void closeEvent(QCloseEvent *event) override;
 
+public slots:
     /**
      * Слот для обновления списка доступных директорий
      */
