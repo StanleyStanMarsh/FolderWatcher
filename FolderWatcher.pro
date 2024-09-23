@@ -5,7 +5,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QMAKE_TARGET_COMPANY = DIPMaxMax
 QMAKE_TARGET_PRODUCT = FolderWatcher
 QMAKE_TARGET_COPYRIGHT = DIPMaxMax Proj.
-VERSION = 1.1
+VERSION = 1.2
 
 CONFIG += c++20
 
@@ -41,6 +41,8 @@ FORMS += \
 CONFIG += lrelease
 CONFIG += embed_translations
 LIBS += -lstdc++fs
+
+RC_ICONS = icon.ico
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

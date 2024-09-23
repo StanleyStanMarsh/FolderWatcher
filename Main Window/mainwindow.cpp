@@ -292,7 +292,8 @@ void MainWindow::on_info_message_triggered() const
     info_box.setWindowTitle("О программе...");
     info_box.setBaseSize(200, 100);
     info_box.setIcon(QMessageBox::Information);
-    info_box.setText("<b>Программа FolderWatcher ver. 0.9</b>");
+    info_box.setText("<b>Программа FolderWatcher ver. 1.2 release</b><br>"
+                     "<a href='http://www.trolltech.com'>GitHub проекта</a>");
     info_box.setInformativeText("<b>Разработчик ДИПМаксМакс</b>");
     info_box.exec();
 }
